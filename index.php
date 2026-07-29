@@ -1,16 +1,15 @@
 <?php
 /**
  * LandingFlow - Application Entry Point
- * 
+ *
  * Front controller that handles all requests.
  */
 
 // Define base path
-define('BASE_PATH', dirname(__DIR__));
+define('BASE_PATH', __DIR__);
 define('APP_PATH', BASE_PATH . '/app');
 define('CONFIG_PATH', BASE_PATH . '/config');
 define('STORAGE_PATH', BASE_PATH . '/storage');
-define('PUBLIC_PATH', BASE_PATH . '/public');
 
 // Load configuration
 require_once CONFIG_PATH . '/loader.php';
