@@ -1,0 +1,13 @@
+{
+  "name": "landingflow/app",
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "require": {
+    "php": ">=8.0",
+    "phpmailer/phpmailer": "^7.1",
+    "tecnickcom/tcpdf": "^6.11"
+  }
+}

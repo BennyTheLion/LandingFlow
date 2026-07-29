@@ -1,0 +1,74 @@
+<?php ob_start(); $sites = $sites ?? []; ?>
+<section style="padding-top:140px;padding-bottom:80px"><div class="container">
+  <div class="head-center" style="margin-bottom:40px">
+    <span class="section-eyebrow">תיק עבודות</span>
+    <h1 class="section-title" style="margin:0 auto 12px">ראו אתרים שבנינו</h1>
+    <p class="section-sub" style="margin:0 auto 30px">גללו בין האתרים שיצרנו. כל אתר נטען בתצוגה מקדימה חיה.</p>
+  </div>
+
+  <style>
+    .carousel-wrap{position:relative;max-width:1000px;margin:0 auto}
+    .carousel-slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:16px;border:1px solid var(--border)}
+    .carousel-slides::-webkit-scrollbar{display:none}
+    .carousel-slide{flex:0 0 100%;scroll-snap-align:start;background:var(--surface);padding:20px}
+    .slide-name{font-size:1.05rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+    .slide-url{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);direction:ltr}
+    .carousel-dots{display:flex;justify-content:center;gap:8px;margin-top:16px}
+    .carousel-dot{width:10px;height:10px;border-radius:50%;background:var(--border);cursor:pointer;transition:.2s}
+    .carousel-dot.active{background:var(--primary);width:28px;border-radius:100px}
+    .carousel-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:var(--shadow-sm);transition:.2s;color:var(--ink)}
+    .carousel-nav:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .carousel-prev{left:-18px}.carousel-next{right:-18px}
+    @media(max-width:760px){.carousel-nav{display:none}.carousel-slide{padding:12px}.carousel-iframe{height:350px!important}}
+  </style>
+
+  <div class="carousel-wrap">
+    <button class="carousel-nav carousel-prev" onclick="slideCarousel(-1)" aria-label="הקודם">◀</button>
+    <button class="carousel-nav carousel-next" onclick="slideCarousel(1)" aria-label="הבא">▶</button>
+    <div class="carousel-slides" id="carouselSlides">
+      <?php foreach ($sites as $i => $site): ?>
+      <div class="carousel-slide" id="slide<?= $i ?>">
+        <div class="slide-name">
+          <span><?= htmlspecialchars($site['name']) ?></span>
+        </div>
+        <iframe src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>" loading="lazy"></iframe>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <div class="carousel-dots" id="carouselDots">
+      <?php for ($i = 0; $i < count($sites); $i++): ?>
+      <div class="carousel-dot<?= $i===0?' active':'' ?>" data-index="<?= $i ?>" onclick="goToSlide(<?= $i ?>)"></div>
+      <?php endfor; ?>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:48px">
+    <p style="color:var(--ink-soft);margin-bottom:16px">רוצים אתר כמו אלה? דברו איתנו.</p>
+    <a href="<?= $url('contact') ?>" class="btn btn-primary btn-lg">📋 צור קשר</a>
+  </div>
+</div>
+
+<script>
+var currentSlide = 0, totalSlides = <?= count($sites) ?>, scrolling = false;
+function goToSlide(n) {
+  currentSlide = n;
+  scrolling = true;
+  var slide = document.getElementById('slide' + n);
+  if (slide) slide.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  document.querySelectorAll('.carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===n); });
+  setTimeout(function(){ scrolling = false; }, 600);
+}
+function slideCarousel(dir) {
+  var n = (currentSlide + dir + totalSlides) % totalSlides;
+  goToSlide(n);
+}
+document.getElementById('carouselSlides').addEventListener('scroll', function(){
+  if (scrolling) return;
+  var w = this.offsetWidth;
+  var idx = Math.round(this.scrollLeft / w);
+  if (idx !== currentSlide) { currentSlide = idx; document.querySelectorAll('.carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===idx); }); }
+});
+</script>
+</section>
+
+<?php $content = ob_get_clean(); include __DIR__ . '/../partials/layout.php'; ?>

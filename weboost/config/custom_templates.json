@@ -1,0 +1,74 @@
+[
+    {
+        "name": "Restaurant Template",
+        "category": "restaurant",
+        "colors": {
+            "primary": "#C2410C",
+            "primaryDark": "#7C2D12",
+            "secondary": "#D97706",
+            "bg": "#FDF8F0",
+            "accent": "#EAB308",
+            "gradient": "linear-gradient(135deg, #C2410C 0%, #7C2D12 40%, #D97706 100%)"
+        },
+        "sections": [
+            "hero",
+            "menu",
+            "about",
+            "gallery",
+            "info",
+            "testimonials",
+            "booking-cta",
+            "contact",
+            "footer"
+        ],
+        "created": "2026-07-17 21:51:46"
+    },
+    {
+        "name": "Restaurant Template",
+        "category": "restaurant",
+        "colors": {
+            "primary": "#C2410C",
+            "primaryDark": "#7C2D12",
+            "secondary": "#D97706",
+            "bg": "#FDF8F0",
+            "accent": "#EAB308",
+            "gradient": "linear-gradient(135deg, #C2410C 0%, #7C2D12 40%, #D97706 100%)"
+        },
+        "sections": [
+            "hero",
+            "menu",
+            "about",
+            "gallery",
+            "info",
+            "testimonials",
+            "booking-cta",
+            "contact",
+            "footer"
+        ],
+        "created": "2026-07-17 22:01:08"
+    },
+    {
+        "name": "Restaurant Template",
+        "category": "restaurant",
+        "colors": {
+            "primary": "#C2410C",
+            "primaryDark": "#7C2D12",
+            "secondary": "#D97706",
+            "bg": "#FDF8F0",
+            "accent": "#EAB308",
+            "gradient": "linear-gradient(135deg, #C2410C 0%, #7C2D12 40%, #D97706 100%)"
+        },
+        "sections": [
+            "hero",
+            "menu",
+            "about",
+            "gallery",
+            "info",
+            "testimonials",
+            "booking-cta",
+            "contact",
+            "footer"
+        ],
+        "created": "2026-07-17 22:03:11"
+    }
+]

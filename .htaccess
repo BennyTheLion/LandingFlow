@@ -1,0 +1,10 @@
+Options -Indexes
+
+# Block direct access to everything except the public/ webroot.
+# (Defense in depth: the real fix is pointing the vhost DocumentRoot
+# at public/ directly - see landingflow.local - but this covers any
+# request that still reaches the project root, e.g. via plain
+# http://localhost/landingflow/.)
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/landingflow/public/
+RewriteRule ^(?!public/).* - [F,L]

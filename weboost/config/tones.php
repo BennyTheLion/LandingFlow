@@ -1,0 +1,105 @@
+<?php
+/**
+ * WeBoost — Modern Tone Style Definitions
+ */
+return [
+  'modern' => [
+    'label'       => 'מודרני-מקצועי',
+    'emoji'       => '💼',
+    'colors'      => [
+      'primary'    => '#4F46E5',
+      'primaryDark'=> '#3730A3',
+      'secondary'  => '#818CF8',
+      'bg'         => '#F9FAFB',
+      'surface'    => '#FFFFFF',
+      'text'       => '#111827',
+      'textSoft'   => '#6B7280',
+      'accent'     => '#06B6D4',
+      'gradient'   => 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #06B6D4 100%)',
+    ],
+    'fonts'       => ['heading' => "'Assistant', sans-serif", 'body' => "'Assistant', sans-serif"],
+    'borderRadius' => '14px',
+    'shadow'       => '0 4px 24px rgba(0,0,0,.08)',
+    'heroStyle'    => 'gradient',
+  ],
+
+  'warm' => [
+    'label'       => 'חם וידידותי',
+    'emoji'       => '🤗',
+    'colors'      => [
+      'primary'    => '#C2410C',
+      'primaryDark'=> '#7C2D12',
+      'secondary'  => '#D97706',
+      'bg'         => '#FDF8F0',
+      'surface'    => '#FFFFFF',
+      'text'       => '#2C1810',
+      'textSoft'   => '#78716C',
+      'accent'     => '#EAB308',
+      'gradient'   => 'linear-gradient(135deg, #C2410C 0%, #B45309 40%, #D97706 100%)',
+    ],
+    'fonts'       => ['heading' => "'Rubik', sans-serif", 'body' => "'Rubik', sans-serif"],
+    'borderRadius' => '16px',
+    'shadow'       => '0 6px 28px rgba(249,115,22,.15)',
+    'heroStyle'    => 'gradient',
+  ],
+
+  'bold' => [
+    'label'       => 'נועז ודינמי',
+    'emoji'       => '🔥',
+    'colors'      => [
+      'primary'    => '#DC2626',
+      'primaryDark'=> '#7F1D1D',
+      'secondary'  => '#F87171',
+      'bg'         => '#FEF2F2',
+      'surface'    => '#FFFFFF',
+      'text'       => '#111827',
+      'textSoft'   => '#6B7280',
+      'accent'     => '#FBBF24',
+      'gradient'   => 'linear-gradient(135deg, #DC2626 0%, #991B1B 50%, #000000 100%)',
+    ],
+    'fonts'       => ['heading' => "'Heebo', sans-serif", 'body' => "'Heebo', sans-serif"],
+    'borderRadius' => '10px',
+    'shadow'       => '0 8px 32px rgba(220,38,38,.2)',
+    'heroStyle'    => 'gradient',
+  ],
+
+  'luxury' => [
+    'label'       => 'יוקרתי ואלגנטי',
+    'emoji'       => '✨',
+    'colors'      => [
+      'primary'    => '#1C1917',
+      'primaryDark'=> '#0C0A09',
+      'secondary'  => '#78716C',
+      'bg'         => '#FAFAF9',
+      'surface'    => '#FFFFFF',
+      'text'       => '#1C1917',
+      'textSoft'   => '#78716C',
+      'accent'     => '#D4AF37',
+      'gradient'   => 'linear-gradient(135deg, #1C1917 0%, #44403C 50%, #0C0A09 100%)',
+    ],
+    'fonts'       => ['heading' => "'Playfair Display', serif", 'body' => "'Assistant', sans-serif"],
+    'borderRadius' => '6px',
+    'shadow'       => '0 2px 20px rgba(0,0,0,.06)',
+    'heroStyle'    => 'gradient',
+  ],
+
+  'minimal' => [
+    'label'       => 'נקי ומינימליסטי',
+    'emoji'       => '🤍',
+    'colors'      => [
+      'primary'    => '#18181B',
+      'primaryDark'=> '#09090B',
+      'secondary'  => '#52525B',
+      'bg'         => '#FFFFFF',
+      'surface'    => '#FAFAFA',
+      'text'       => '#18181B',
+      'textSoft'   => '#71717A',
+      'accent'     => '#A1A1AA',
+      'gradient'   => 'linear-gradient(135deg, #18181B 0%, #3F3F46 100%)',
+    ],
+    'fonts'       => ['heading' => "'Assistant', sans-serif", 'body' => "'Assistant', sans-serif"],
+    'borderRadius' => '0',
+    'shadow'       => 'none',
+    'heroStyle'    => 'minimal',
+  ],
+];

@@ -1,0 +1,1 @@
+<?php namespace App\Core\Exceptions; class RedirectException extends \RuntimeException { private string $url; public function __construct(string $url) { $this->url = $url; parent::__construct('Redirect: '.$url); } public function getUrl(): string { return $this->url; } }

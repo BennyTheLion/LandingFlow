@@ -1,0 +1,1 @@
+<?php ob_start() ?><section style="padding-top:100px"><div class="container"><h1>Blog</h1><p>Coming soon.</p></div></section><?php $content = ob_get_clean(); include __DIR__ . '/../partials/layout.php'; ?>
