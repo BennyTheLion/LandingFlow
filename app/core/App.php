@@ -57,6 +57,12 @@ class App
             $this->response->setStatusCode($e->getStatusCode());
             $this->response->send($this->renderError($e));
         } catch (\Exception $e) {
+            Logger::error('app: uncaught exception', [
+                'class' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             if (APP_DEBUG) {
                 throw $e;
             }
