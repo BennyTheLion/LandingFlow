@@ -24,7 +24,7 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
 
         $stmt = $this->pdo->prepare(
             "INSERT INTO password_resets (email, token, created_at, expires_at)
-             VALUES (?, ?, NOW(), DATE_ADD(NOW(), '+1 HOUR'))"
+             VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR))"
         );
         $stmt->execute([$email, $token]);
 
@@ -39,7 +39,7 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
     {
         $stmt = $this->pdo->prepare(
             "SELECT email FROM password_resets
-             WHERE token = ? AND created_at > DATE_ADD(NOW(), '-1 HOUR')
+             WHERE token = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
                AND used = 0"
         );
         $stmt->execute([$token]);

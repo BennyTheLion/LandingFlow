@@ -21,7 +21,7 @@ class EmailVerificationRepository implements EmailVerificationRepositoryInterfac
 
         $stmt = $this->pdo->prepare(
             "INSERT INTO email_verification_tokens (user_id, token, created_at, expires_at)
-             VALUES (?, ?, NOW(), DATE_ADD(NOW(), '+24 HOUR'))"
+             VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR))"
         );
         $stmt->execute([$userId, $token]);
 
@@ -32,7 +32,7 @@ class EmailVerificationRepository implements EmailVerificationRepositoryInterfac
     {
         $stmt = $this->pdo->prepare(
             "SELECT user_id FROM email_verification_tokens
-             WHERE token = ? AND created_at > DATE_ADD(NOW(), '-24 HOUR') AND used = 0"
+             WHERE token = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR) AND used = 0"
         );
         $stmt->execute([$token]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
