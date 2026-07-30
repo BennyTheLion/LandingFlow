@@ -31,7 +31,11 @@
         <div class="slide-name">
           <span><?= htmlspecialchars($site['name']) ?></span>
         </div>
-        <iframe src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>" loading="lazy"></iframe>
+        <?php if ($i === 0): ?>
+        <iframe src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
+        <?php else: ?>
+        <iframe data-src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
+        <?php endif; ?>
       </div>
       <?php endforeach; ?>
     </div>
@@ -50,9 +54,19 @@
 
 <script>
 var currentSlide = 0, totalSlides = <?= count($sites) ?>, scrolling = false;
+function loadSlideIframe(n) {
+  var slide = document.getElementById('slide' + n);
+  if (!slide) return;
+  var iframe = slide.querySelector('iframe[data-src]');
+  if (iframe) {
+    iframe.src = iframe.getAttribute('data-src');
+    iframe.removeAttribute('data-src');
+  }
+}
 function goToSlide(n) {
   currentSlide = n;
   scrolling = true;
+  loadSlideIframe(n);
   var slide = document.getElementById('slide' + n);
   if (slide) slide.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
   document.querySelectorAll('.carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===n); });
@@ -66,7 +80,7 @@ document.getElementById('carouselSlides').addEventListener('scroll', function(){
   if (scrolling) return;
   var w = this.offsetWidth;
   var idx = Math.round(this.scrollLeft / w);
-  if (idx !== currentSlide) { currentSlide = idx; document.querySelectorAll('.carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===idx); }); }
+  if (idx !== currentSlide) { currentSlide = idx; loadSlideIframe(idx); document.querySelectorAll('.carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===idx); }); }
 });
 </script>
 </section>

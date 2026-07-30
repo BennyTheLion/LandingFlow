@@ -40,7 +40,7 @@
 .audit-section{padding:80px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .audit-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;max-width:900px;margin:0 auto}
 @media(max-width:700px){.audit-grid{grid-template-columns:1fr;text-align:center}}
-.audit-info h2{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;line-height:1.25;margin-bottom:12px}
+.audit-info h2{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;line-height:1.25;margin-bottom:12px;text-align:center}
 .audit-info p{color:var(--ink-soft);font-size:1rem;margin-bottom:24px;line-height:1.6}
 .audit-checks{display:flex;flex-direction:column;gap:10px}
 .audit-check{display:flex;align-items:center;gap:10px;font-size:.88rem}
