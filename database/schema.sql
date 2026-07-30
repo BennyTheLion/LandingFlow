@@ -117,6 +117,7 @@ CREATE TABLE `audit_reports` (
     `legal_score` DECIMAL(5,2) NULL,
     `accessibility_score` DECIMAL(5,2) NULL,
     `performance_score` DECIMAL(5,2) NULL,
+    `spam_score` INT DEFAULT 0,
     `total_checks` INT DEFAULT 0,
     `passed_checks` INT DEFAULT 0,
     `failed_checks` INT DEFAULT 0,

@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\Logger;
 use App\Services\Mailer;
 use App\Core\Session;
 use App\Services\LeadService;
@@ -70,7 +71,9 @@ class AuditController extends Controller
             $db->prepare("INSERT INTO audit_reports (url,overall_score,seo_score,security_score,legal_score,accessibility_score,performance_score,spam_score,total_checks,passed_checks,failed_checks,full_report,recommendations,status,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'completed',?,?,NOW())")
                ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode(['seo'=>$seo,'security'=>$sec,'legal'=>$leg,'accessibility'=>$a11y,'performance'=>$perf,'spam'=>$spam], JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
             $rid = $db->lastInsertId();
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            Logger::error('audit: failed to save audit_reports row', ['message' => $e->getMessage()]);
+        }
         
         // Create lead from audit — proper instantiation, email verified by controller
         try {
@@ -83,7 +86,9 @@ class AuditController extends Controller
                 'בדיקת אתר',
                 $url . ' | ציון: ' . $ovr . '/100'
             );
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            Logger::error('audit: failed to capture lead', ['message' => $e->getMessage()]);
+        }
 
         $parsed = parse_url($url);
         $urlInfo = ['url' => $url, 'protocol' => $parsed['scheme'] ?? '', 'domain' => $parsed['host'] ?? '', 'tld' => substr((string)strrchr($parsed['host'] ?? '', '.'), 1) ?: '', 'has_www' => str_starts_with($parsed['host'] ?? '', 'www.'), 'path' => $parsed['path'] ?? ''];
