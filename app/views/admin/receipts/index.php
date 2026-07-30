@@ -48,6 +48,7 @@
 <a href="<?= $url('admin/receipts/create') ?>" class="btn-create">צור קבלה ראשונה</a>
 </div>
 <?php else: ?>
+<div style="overflow-x:auto">
 <table class="receipts-table">
 <thead><tr>
 <th>מס' קבלה</th><th>לקוח</th><th>סכום</th><th>תאריך</th><th>נשלח</th><th>פעולות</th>
@@ -73,6 +74,7 @@
 <?php endforeach; ?>
 </tbody>
 </table>
+</div>
 <?php endif; ?>
 </div>
 <?php $content = ob_get_clean(); include APP_PATH . '/views/admin/layout.php'; ?>

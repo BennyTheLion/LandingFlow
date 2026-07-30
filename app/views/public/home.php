@@ -19,8 +19,9 @@
 .features-header{text-align:center;margin-bottom:48px}
 .features-header h2{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;line-height:1.25;max-width:680px;margin-bottom:12px}
 .features-header p{color:var(--ink-soft);font-size:1rem;max-width:540px;margin:0 auto}
-.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:800px;margin:0 auto}
-@media(max-width:600px){.features-grid{grid-template-columns:1fr}}
+.features-grid{display:grid;grid-template-columns:1fr;gap:24px;max-width:1050px;margin:0 auto}
+@media(min-width:640px){.features-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.features-grid{grid-template-columns:repeat(3,1fr)}}
 .feature-item{display:flex;gap:16px;align-items:flex-start}
 .feature-icon{width:44px;height:44px;border-radius:10px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
 .feature-text h3{font-size:.95rem;font-weight:700;margin-bottom:4px}
@@ -72,7 +73,7 @@
       <h2>פתרונות טכנולוגיים — הכל מאדם אחד</h2>
       <p>דפי נחיתה, אתרים, אוטומציות מבוססות AI, ניטור וניהול לידים — אין צורך במספר ספקים.</p>
     </div>
-    <div class="features-grid" style="grid-template-columns:repeat(3,1fr);max-width:1050px">
+    <div class="features-grid">
       <div class="feature-item"><div class="feature-icon">📄</div><div class="feature-text"><h3>דפי נחיתה</h3><p>דפים מהירים להמרה — טפסים חכמים, A/B טסטינג ואנליטיקס.</p></div></div>
       <div class="feature-item"><div class="feature-icon">💻</div><div class="feature-text"><h3>פיתוח אתרים</h3><p>אתרי תדמית, חנויות אונליין ומערכות — קוד נקי, SEO מובנה.</p></div></div>
       <div class="feature-item"><div class="feature-icon">🤖</div><div class="feature-text"><h3>אוטומציות AI</h3><p>צ'אטבוטים, מענה אוטומטי ללידים, אינטגרציות חכמות — AI שעובד בשבילך.</p></div></div>

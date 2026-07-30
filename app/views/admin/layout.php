@@ -3,13 +3,22 @@
 :root{--bg:#F9FAFB;--surface:#FFFFFF;--surface-2:#F3F4F6;--border:#E5E7EB;--ink:#111827;--ink-soft:#6B7280;--ink-faint:#9CA3AF;--primary:#2563EB;--primary-2:#3B82F6;--primary-dark:#1E40AF;--success:#16A34A;--warning:#F59E0B;--danger:#DC2626;--info:#0EA5E9;--container:1200px;--font:"Rubik","system-ui",-apple-system,sans-serif;--font-mono:"IBM Plex Mono",monospace}
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6}
 .admin-layout{display:flex;min-height:100vh}
-.sidebar{width:240px;background:#111827;color:#fff;padding:24px 20px;position:fixed;top:0;right:0;bottom:0;overflow-y:auto}
+.sidebar{width:240px;background:#111827;color:#fff;padding:24px 20px;position:fixed;top:0;right:0;bottom:0;overflow-y:auto;z-index:700;transform:translateX(100%);transition:transform .3s ease}
+.sidebar.open{transform:translateX(0)}
+@media(min-width:900px){.sidebar{transform:none}}
+.sidebar-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:650;opacity:0;visibility:hidden;transition:opacity .3s}
+.sidebar-backdrop.open{opacity:1;visibility:visible}
+@media(min-width:900px){.sidebar-backdrop{display:none}}
 .sidebar .logo{display:flex;align-items:center;gap:8px;font-size:1.1rem;font-weight:800;margin-bottom:32px;color:#fff;text-decoration:none}.sidebar .logo-mark{width:30px;height:30px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.85rem}
 .side-nav{display:flex;flex-direction:column;gap:4px}
 .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#9CA3AF;font-size:.9rem;font-weight:600;transition:.2s;text-decoration:none}.side-nav a:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .side-nav a:hover,.side-nav a.active{background:rgba(37,99,235,.15);color:#fff}
-.main-content{margin-right:240px;flex:1;padding:32px}
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.main-content{margin-right:0;flex:1;padding:20px;min-width:0}
+@media(min-width:900px){.main-content{margin-right:240px;padding:32px}}
+.mobile-topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+@media(min-width:900px){.mobile-topbar{display:none}}
+.sidebar-toggle{width:40px;height:40px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
 .top-bar h1{font-size:1.5rem;font-weight:800}
 .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:28px}
 @media(min-width:900px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
@@ -33,7 +42,8 @@ body.high-contrast{filter:contrast(1.4) grayscale(.3)}body.large-text{font-size:
 .badge-new{background:rgba(37,99,235,.1);color:var(--primary)}.badge-won{background:rgba(22,163,74,.12);color:var(--success)}.badge-active{background:rgba(14,165,233,.1);color:var(--info)}
 </style></head><body>
 <div class="admin-layout">
-<aside class="sidebar">
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<aside class="sidebar" id="sidebar">
   <a href="<?= $url('') ?>" class="logo"><span class="logo-mark">LF</span>LandingFlow</a>
   <nav class="side-nav">
     <a href="<?= $url('admin') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/monitoring') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/leads') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/projects') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/hosting') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/audit-reports') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/receipts') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/dashboard') ? '' : 'active')))))) ?>">📊 דשבורד</a>
@@ -47,6 +57,10 @@ body.high-contrast{filter:contrast(1.4) grayscale(.3)}body.large-text{font-size:
   </nav>
 </aside>
 <main class="main-content">
+<div class="mobile-topbar">
+  <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="תפריט">☰</button>
+  <span class="logo"><span class="logo-mark">LF</span>LandingFlow</span>
+</div>
 <?= $content ?? '' ?>
 </main></div>
 
@@ -58,6 +72,10 @@ body.high-contrast{filter:contrast(1.4) grayscale(.3)}body.large-text{font-size:
   if(waFloat){waFloat.addEventListener("mouseenter",function(){waTooltip.classList.add("visible")});waFloat.addEventListener("mouseleave",function(){waTooltip.classList.remove("visible")})}
   var a11yToggle=document.getElementById("a11yToggle"),a11yPanel=document.getElementById("a11yPanel");
   if(a11yToggle){a11yToggle.addEventListener("click",function(e){e.stopPropagation();a11yPanel.classList.toggle("open")});document.addEventListener("click",function(e){if(!a11yPanel.contains(e.target)&&e.target!==a11yToggle)a11yPanel.classList.remove("open")})}
+  var sidebar=document.getElementById("sidebar"),sidebarToggle=document.getElementById("sidebarToggle"),sidebarBackdrop=document.getElementById("sidebarBackdrop");
+  function closeSidebar(){sidebar.classList.remove("open");sidebarBackdrop.classList.remove("open")}
+  if(sidebarToggle){sidebarToggle.addEventListener("click",function(){sidebar.classList.toggle("open");sidebarBackdrop.classList.toggle("open")})}
+  if(sidebarBackdrop){sidebarBackdrop.addEventListener("click",closeSidebar)}
 })();
 </script>
 </body></html>
