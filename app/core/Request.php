@@ -35,8 +35,10 @@ class Request
         $uri = trim($uri, '/');
         
         // Remove base path if exists (e.g., /landingflow/public)
-        $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-        if ($scriptName !== '/' && $scriptName !== '\\' && str_starts_with($uri, trim($scriptName, '/'))) {
+        // dirname() returns '\' instead of '/' on Windows when there's no
+        // subdirectory - normalize so path comparisons work on both OSes.
+        $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($scriptName !== '/' && str_starts_with($uri, trim($scriptName, '/'))) {
             $uri = substr($uri, strlen(trim($scriptName, '/')));
         }
         
@@ -55,8 +57,10 @@ class Request
     {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-        
+        // dirname() returns '\' instead of '/' on Windows when there's no
+        // subdirectory - normalize so it doesn't leak into generated URLs.
+        $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+
         return rtrim($protocol . '://' . $host . $scriptName, '/');
     }
 

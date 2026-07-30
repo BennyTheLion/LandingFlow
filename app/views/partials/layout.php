@@ -9,7 +9,9 @@
 if (!isset($url)) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+    // dirname() returns '\' instead of '/' on Windows when there's no
+    // subdirectory - normalize so it doesn't leak into generated URLs.
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
     $baseUrl = $scheme . '://' . $host . ($scriptDir === '/' ? '' : $scriptDir);
     $url = fn(string $path = '') => $baseUrl . '/' . ltrim($path, '/');
 }
