@@ -22,11 +22,12 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
     {
         $token = bin2hex(random_bytes(32));
 
+        $expiresAt = gmdate('Y-m-d H:i:s', time() + 3600);
         $stmt = $this->pdo->prepare(
             "INSERT INTO password_resets (email, token, created_at, expires_at)
-             VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR))"
+             VALUES (?, ?, NOW(), ?)"
         );
-        $stmt->execute([$email, $token]);
+        $stmt->execute([$email, $token, $expiresAt]);
 
         return $token;
     }
@@ -39,7 +40,7 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
     {
         $stmt = $this->pdo->prepare(
             "SELECT email FROM password_resets
-             WHERE token = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+             WHERE token = ? AND expires_at > NOW()
                AND used = 0"
         );
         $stmt->execute([$token]);

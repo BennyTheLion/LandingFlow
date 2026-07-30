@@ -23,9 +23,13 @@ storage/
 .DS_Store
 Thumbs.db
 
-# Test files
-test*.php
-*test*.php
+# Stray scratch/debug scripts at the project root only - NOT the tests/ suite
+# (an unanchored *test*.php here previously matched every file under tests/,
+# e.g. tests/Auth/EmailVerificationTest.php, silently keeping the whole test
+# suite out of git)
+/test*.php
+/*test*.php
+tests/test.db
 
 # Composer
 composer.phar
