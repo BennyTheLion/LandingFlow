@@ -410,6 +410,25 @@ CREATE TABLE `api_tokens` (
 ) ENGINE=InnoDB;
 
 -- ===================================================
+-- RECEIPTS
+-- ===================================================
+
+CREATE TABLE `receipts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `receipt_number` VARCHAR(20) NOT NULL UNIQUE,
+    `customer_name` VARCHAR(255) NOT NULL,
+    `customer_email` VARCHAR(255) NOT NULL,
+    `transaction_id` VARCHAR(100) DEFAULT NULL,
+    `service_description` TEXT NOT NULL,
+    `amount` DECIMAL(10,2) NOT NULL,
+    `receipt_date` DATE NOT NULL,
+    `pdf_path` VARCHAR(500) DEFAULT NULL,
+    `emailed_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===================================================
 -- DEFAULT DATA
 -- ===================================================
 
