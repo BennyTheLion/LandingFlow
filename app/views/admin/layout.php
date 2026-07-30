@@ -69,7 +69,7 @@ body.high-contrast{filter:contrast(1.4) grayscale(.3)}body.large-text{font-size:
 <script>
 (function(){
   var waFloat=document.getElementById("waFloat"),waTooltip=document.getElementById("waTooltip");
-  if(waFloat){waFloat.addEventListener("mouseenter",function(){waTooltip.classList.add("visible")});waFloat.addEventListener("mouseleave",function(){waTooltip.classList.remove("visible")})}
+  if(waFloat&&waTooltip){waFloat.addEventListener("mouseenter",function(){waTooltip.classList.add("visible")});waFloat.addEventListener("mouseleave",function(){waTooltip.classList.remove("visible")})}
   var a11yToggle=document.getElementById("a11yToggle"),a11yPanel=document.getElementById("a11yPanel");
   if(a11yToggle){a11yToggle.addEventListener("click",function(e){e.stopPropagation();a11yPanel.classList.toggle("open")});document.addEventListener("click",function(e){if(!a11yPanel.contains(e.target)&&e.target!==a11yToggle)a11yPanel.classList.remove("open")})}
   var sidebar=document.getElementById("sidebar"),sidebarToggle=document.getElementById("sidebarToggle"),sidebarBackdrop=document.getElementById("sidebarBackdrop");
