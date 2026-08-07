@@ -40,7 +40,7 @@ class LandingPageScanner implements LandingPageScannerInterface
 
         // Parse DOM once
         $this->dom = new \DOMDocument();
-        @$this->dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'), LIBXML_NOWARNING | LIBXML_NOERROR);
+        @$this->dom->loadHTML(mb_convert_encoding($html !== '' ? $html : '<html></html>', 'HTML-ENTITIES', 'UTF-8'), LIBXML_NOWARNING | LIBXML_NOERROR);
         $this->xpath = new \DOMXPath($this->dom);
 
         // Run all 7 categories
@@ -142,7 +142,7 @@ class LandingPageScanner implements LandingPageScannerInterface
         // 2a — HTML validation (DOM parse success)
         libxml_use_internal_errors(true);
         $testDom = new \DOMDocument();
-        $testDom->loadHTML(mb_convert_encoding($this->html, 'HTML-ENTITIES', 'UTF-8'), LIBXML_NOWARNING | LIBXML_NOERROR);
+        $testDom->loadHTML(mb_convert_encoding($this->html !== '' ? $this->html : '<html></html>', 'HTML-ENTITIES', 'UTF-8'), LIBXML_NOWARNING | LIBXML_NOERROR);
         $xmlErrors = libxml_get_errors();
         libxml_clear_errors();
         $errorCount = count($xmlErrors);

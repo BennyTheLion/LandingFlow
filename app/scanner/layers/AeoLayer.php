@@ -15,7 +15,7 @@ class AeoLayer implements ScoringLayer
         $recommendations = [];
         $score = 100;
         $dom = new \DOMDocument();
-        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        @$dom->loadHTML(mb_convert_encoding($html !== '' ? $html : '<html></html>', 'HTML-ENTITIES', 'UTF-8'));
         $xpath = new \DOMXPath($dom);
 
         $body = '';

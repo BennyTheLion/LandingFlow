@@ -113,7 +113,7 @@ class SecurityScanner implements SecurityScannerInterface
     {
         if (!$isHttps) return 0;
         $dom = new \DOMDocument();
-        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        @$dom->loadHTML(mb_convert_encoding($html !== '' ? $html : '<html></html>', 'HTML-ENTITIES', 'UTF-8'));
         $xpath = new \DOMXPath($dom);
         $count = 0;
         foreach ($xpath->query('//form[@action]') as $form) {

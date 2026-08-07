@@ -40,7 +40,7 @@ class SpamScanner implements SpamScannerInterface
         $result = new SpamResult();
 
         $dom = new \DOMDocument();
-        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        @$dom->loadHTML(mb_convert_encoding($html !== '' ? $html : '<html></html>', 'HTML-ENTITIES', 'UTF-8'));
         $xpath = new \DOMXPath($dom);
 
         // Normalize body text
@@ -531,6 +531,7 @@ class SpamScanner implements SpamScannerInterface
     {
         $forms = $xpath->query('//form');
         $formCount = $forms->length;
+        $result->formCount = $formCount;
 
         if ($formCount === 0) {
             // No forms = no form spam risk
@@ -542,6 +543,11 @@ class SpamScanner implements SpamScannerInterface
             $hasHoneypot = $this->detectHoneypot($form);
             $hasValidation = $this->detectValidation($form);
             $hasCsrf = $this->detectCsrf($form, $xpath);
+
+            if (!$hasCaptcha) $result->formHasCaptcha = false;
+            if (!$hasHoneypot) $result->formHasHoneypot = false;
+            if (!$hasValidation) $result->formHasValidation = false;
+            if (!$hasCsrf) $result->formHasCsrf = false;
 
             if (!$hasCaptcha) {
                 $result->addIssue(
