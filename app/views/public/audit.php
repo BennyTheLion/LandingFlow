@@ -8,17 +8,31 @@
     <div class="check-row" style="margin-bottom:16px"><input type="checkbox" id="auditConsent" required><label for="auditConsent">אני מאשר/ת את <a href="<?= $url('terms-of-service') ?>" target="_blank">תנאי השימוש</a></label></div>
     <button type="submit" class="btn btn-primary btn-lg btn-block" id="scanBtn">התחל בדיקה מקיפה</button></form>
     <div id="load" style="display:none;text-align:center;padding:30px"><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px"></div><p style="color:var(--ink-soft)">בודק את האתר...</p></div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}
+    .chk-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin:0 6px;border-radius:50%;background:var(--surface-2);color:var(--ink-faint);cursor:pointer;font-size:.68rem;font-weight:700;line-height:1;vertical-align:middle;font-style:normal}
+    .chk-tip:hover,.chk-tip.active{background:var(--primary);color:#fff}
+    .chk-tip::after{content:attr(data-tip);position:absolute;bottom:135%;right:50%;transform:translateX(50%);width:220px;max-width:65vw;background:#1e1e2e;color:#fff;padding:9px 11px;border-radius:8px;font-size:.72rem;font-weight:400;line-height:1.5;white-space:normal;text-align:right;box-shadow:0 6px 20px rgba(0,0,0,.28);opacity:0;visibility:hidden;transition:opacity .15s;pointer-events:none;z-index:30}
+    .chk-tip:hover::after,.chk-tip.active::after{opacity:1;visibility:visible}
+    </style>
     <div id="res" style="display:none;margin-top:20px">
       <div id="domainInfo" style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem"></div>
       <div id="sc" style="width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--success) 0deg,var(--border) 0deg);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><div style="width:110px;height:110px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center"><span id="sn" style="font-family:var(--font-mono);font-size:2.5rem;font-weight:800">0</span><span style="font-size:.75rem;color:var(--ink-faint)">/100</span></div></div>
       <div id="de"></div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px"><a id="pl" href="#" class="btn btn-primary" target="_blank">📥 הורד PDF</a><a id="wl" href="#" class="btn btn-ghost" target="_blank">💬 שלח בוואטסאפ</a></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px"><button type="button" id="pl" class="btn btn-primary">📧 שלח דוח למייל</button><a id="wl" href="#" class="btn btn-ghost" target="_blank">💬 שלח בוואטסאפ</a></div>
     </div>
   </div>
 </div></section>
 <script>
 var csrfToken=document.querySelector('input[name="<?= CSRF_TOKEN_NAME ?>"]').value;
+// Tap/click-to-toggle check-explanation tooltips (works on touch, not just hover)
+document.getElementById("de").addEventListener("click",function(e){
+  var t=e.target.closest(".chk-tip");
+  document.querySelectorAll(".chk-tip.active").forEach(function(el){if(el!==t)el.classList.remove("active")});
+  if(t){t.classList.toggle("active");e.stopPropagation()}
+});
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".chk-tip"))document.querySelectorAll(".chk-tip.active").forEach(function(el){el.classList.remove("active")});
+});
 // Send verification code
 document.getElementById("sendCodeBtn").addEventListener("click",async function(){
   var em=document.getElementById("ae").value;
@@ -33,6 +47,17 @@ document.getElementById("sendCodeBtn").addEventListener("click",async function()
 // Scan submission
 document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});var d=await r.json();if(!d.success){alert("Error: "+d.error);document.getElementById("load").style.display="none";return}document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
     var ui=d.urlInfo||{};document.getElementById("domainInfo").innerHTML="<div><strong>כתובת:</strong> "+ui.url+"</div><div><strong>פרוטוקול:</strong> "+(ui.protocol||"-")+"</div><div><strong>דומיין:</strong> "+ui.domain+"</div><div><strong>סיומת:</strong> ."+ui.tld+"</div><div><strong>WWW:</strong> "+(ui.has_www?"כן":"לא")+"</div><div><strong>נתיב:</strong> "+(ui.path||"/")+"</div>";
-    var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").href="https://wa.me/972528529448?text="+msg;document.getElementById("pl").href="<?= $url('audit/pdf') ?>/"+d.reportId}catch(err){alert("שגיאה: "+(err.message||"ודאו שהURL תקין"));document.getElementById("load").style.display="none";console.error(err)}});
+    var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){var tipHtml=ck.tip?"<span class=chk-tip tabindex=0 role=button aria-label=\"הסבר: "+ck.tip.replace(/\"/g,"&quot;")+"\" data-tip=\""+ck.tip.replace(/\"/g,"&quot;")+"\">?</span>":"";h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+tipHtml+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").href="https://wa.me/972528529448?text="+msg;var plBtn=document.getElementById("pl");plBtn.dataset.reportId=d.reportId;plBtn.dataset.email=em;plBtn.disabled=false;plBtn.textContent="📧 שלח דוח למייל"}catch(err){alert("שגיאה: "+(err.message||"ודאו שהURL תקין"));document.getElementById("load").style.display="none";console.error(err)}});
+// Email the finished report to the address the user verified
+document.getElementById("pl").addEventListener("click",async function(){
+  var btn=this,rid=btn.dataset.reportId,em=btn.dataset.email;
+  if(!rid||!em){alert("יש להריץ בדיקה קודם");return}
+  var orig=btn.textContent;btn.disabled=true;btn.textContent="שולח...";
+  try{
+    var r=await fetch("<?= $url('audit/report') ?>",{method:"POST",body:new URLSearchParams({reportId:rid,email:em,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});
+    var d=await r.json();
+    if(d.success){btn.textContent="נשלח ✓"}else{alert(d.error||"שליחת הדוח נכשלה");btn.textContent=orig;btn.disabled=false}
+  }catch(err){alert("שגיאה בשליחת הדוח");btn.textContent=orig;btn.disabled=false}
+});
 </script>
 <?php $content = ob_get_clean(); include __DIR__ . '/../partials/layout.php'; ?>

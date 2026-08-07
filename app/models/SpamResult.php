@@ -24,6 +24,13 @@ class SpamResult
     public int $emailScore = 100;
     public int $formScore = 100;
 
+    // Form spam-protection breakdown (used by the audit page for per-mechanism checks)
+    public int $formCount = 0;
+    public bool $formHasCaptcha = true;
+    public bool $formHasHoneypot = true;
+    public bool $formHasCsrf = true;
+    public bool $formHasValidation = true;
+
     /** Weighted final score */
     public function finalScore(): int
     {
