@@ -91,7 +91,7 @@ class App
     {
         ob_start();
         $code = $e instanceof \App\Core\Exceptions\HttpException ? $e->getStatusCode() : 500;
-        $message = APP_DEBUG ? $e->getMessage() : '????? ?????. ??? ??? ???? ????? ????.';
+        $message = APP_DEBUG ? $e->getMessage() : 'אירעה שגיאה. אנא נסו שוב מאוחר יותר.';
         $viewFile = APP_PATH . '/views/errors/' . $code . '.php';
         
         if (file_exists($viewFile)) {

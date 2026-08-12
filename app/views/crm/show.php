@@ -3,6 +3,11 @@
   <div style="display:flex;gap:8px">
     <a href="<?= $url('admin/leads/' . $lead['id'] . '/edit') ?>" class="btn btn-primary">ערוך</a>
     <a href="<?= $url('admin/leads') ?>" class="btn btn-ghost">← חזרה</a>
+    <form method="POST" action="<?= $url('admin/leads/' . $lead['id']) ?>" onsubmit="return confirm('למחוק את הליד של <?= htmlspecialchars(addslashes($lead['name'])) ?>? הפעולה בלתי הפיכה.')">
+      <?= $csrf() ?>
+      <input type="hidden" name="_method" value="DELETE">
+      <button type="submit" class="btn btn-ghost" style="color:var(--danger);border-color:rgba(220,38,38,.3)">מחק ליד</button>
+    </form>
   </div>
 </div>
 
@@ -40,6 +45,7 @@
     <div class="detail-card" style="margin-bottom:18px">
       <h3>סטטוס</h3>
       <form method="POST" action="<?= $url('admin/leads/' . $lead['id'] . '/status') ?>" class="status-form">
+        <?= $csrf() ?>
         <select name="status">
           <?php foreach(['new'=>'חדש','contacted'=>'נוצר קשר','qualified'=>'מתאים','proposal_sent'=>'הצעה נשלחה','negotiation'=>'משא ומתן','won'=>'נסגר','lost'=>'אבוד'] as $k=>$v): ?>
           <option value="<?= $k ?>" <?= $lead['status']===$k?'selected':'' ?>><?= $v ?></option>
@@ -59,6 +65,7 @@
         <?php endforeach; ?>
       </div>
       <form method="POST" action="<?= $url('admin/leads/' . $lead['id'] . '/note') ?>" class="note-form">
+        <?= $csrf() ?>
         <textarea name="content" placeholder="הוסף הערה..."></textarea>
         <div class="row">
           <select name="type"><option value="note">הערה</option><option value="call">שיחה</option><option value="email">אימייל</option><option value="meeting">פגישה</option><option value="whatsapp">וואטסאפ</option></select>

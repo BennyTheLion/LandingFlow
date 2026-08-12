@@ -1,15 +1,15 @@
 <?php ob_start(); ?>
-<section style="padding:80px 0;background:var(--bg)"><div class="container" style="text-align:center">
-  <div class="head-center" style="margin-bottom:40px">
+<section style="padding:96px 0 56px;background:var(--bg)"><div class="container" style="text-align:center">
+  <div class="head-center" style="margin-bottom:18px">
     <span class="section-eyebrow" style="background:var(--surface-2);color:var(--ink-soft)">עוזר חכם</span>
-    <h2 class="section-title" style="margin:0 auto 12px;color:var(--ink)">תארו את העסק — וקבלו אתר מרשים תוך שניות</h2>
-    <p class="section-sub" style="margin:0 auto 30px;color:var(--ink-soft)">פשוט הקלידו תיאור חופשי. העוזר יבין לבד את סוג העסק, הסגנון והשם — וייצר תצוגה מקדימה</p>
+    <h2 class="section-title" style="margin:0 auto 6px;color:var(--ink);font-size:clamp(1.5rem,3.6vw,2.2rem)">תארו את העסק — וקבלו אתר מרשים תוך שניות</h2>
+    <p class="section-sub" style="margin:0 auto;color:var(--ink-soft)">פשוט הקלידו תיאור חופשי. העוזר יבין לבד את סוג העסק, הסגנון והשם — וייצר תצוגה מקדימה</p>
   </div>
 
   <style>
     .chat-widget{max-width:700px;margin:0 auto;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg);text-align:right}
     .chat-header{background:var(--surface-2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}.chat-header .avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem}.chat-header strong{font-size:.9rem}.chat-header span{font-size:.72rem;color:var(--ink-faint)}
-    .chat-body{padding:16px;min-height:300px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+    .chat-body{padding:16px;min-height:220px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
     .chat-msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:.88rem;line-height:1.55;animation:fadeIn .3s ease}
     .chat-msg.assistant{background:var(--surface-2);color:#000 !important;align-self:flex-end;border-bottom-left-radius:4px}
     .chat-msg.user{background:var(--primary);color:#fff;align-self:flex-start;border-bottom-right-radius:4px}
@@ -52,8 +52,6 @@ document.querySelectorAll('.model-opt').forEach(function(btn){
 });
 
 (function(){
-  console.log('✅ JS STARTED');
-  document.title = 'JS OK' ;
   var body=document.getElementById("chatBody"),input=document.getElementById("chatInput"),send=document.getElementById("chatSend");
   var step=0,answers={type:"",color:"",name:"",desc:""};
   var waitingForInput=true;
@@ -106,12 +104,16 @@ document.querySelectorAll('.model-opt').forEach(function(btn){
     return {type:t||"",color:c||"",name:n||""};
   }
 
-  function addMsg(text,cls){var d=document.createElement("div");d.className="chat-msg "+cls;d.innerHTML=text;body.appendChild(d);body.scrollTop=body.scrollHeight}
-  function addOptions(opts,callback){var d=document.createElement("div");d.className="chat-options";opts.forEach(function(o){var b=document.createElement("button");b.className="chat-opt";b.textContent=o.label;b.onclick=function(){d.querySelectorAll('.chat-opt').forEach(function(x){x.classList.remove('selected')});b.classList.add('selected');callback(o.value)};d.appendChild(b)});body.appendChild(d);body.scrollTop=body.scrollHeight}
+  function followConversation(){
+    var row=document.getElementById("chatInputRow");
+    var target=(row&&row.style.display!=="none")?row:body;
+    target.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  function addMsg(text,cls){var d=document.createElement("div");d.className="chat-msg "+cls;d.innerHTML=text;body.appendChild(d);body.scrollTop=body.scrollHeight;followConversation()}
+  function addOptions(opts,callback){var d=document.createElement("div");d.className="chat-options";opts.forEach(function(o){var b=document.createElement("button");b.className="chat-opt";b.textContent=o.label;b.onclick=function(){d.querySelectorAll('.chat-opt').forEach(function(x){x.classList.remove('selected')});b.classList.add('selected');callback(o.value)};d.appendChild(b)});body.appendChild(d);body.scrollTop=body.scrollHeight;followConversation()}
   function showInput(){input.style.display="block";document.querySelector(".chat-input-row").style.display="flex";input.value="";input.focus();waitingForInput=true}
 
   function startWizard(){
-    console.log('startWizard running');
     addMsg("היי! 👋 אני הבונה החכם של LandingFlow.<br><br>פשוט <b>תארו לי את העסק שלכם</b> — מי אתם, מה אתם עושים, איזה סגנון אתם אוהבים.<br><br><i>לדוגמה: \"מסעדת פיצה רומא, אוכל איטלקי אותנטי, סטודיו לעיצוב גרפי בשם 'צורה וצבע', סגנון יצירתי-צעיר\"</i>","assistant");
     showInput();
   }

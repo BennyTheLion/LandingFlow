@@ -1,26 +1,30 @@
 <?php ob_start(); $sites = $sites ?? []; ?>
-<section style="padding-top:140px;padding-bottom:80px"><div class="container">
-  <div class="head-center" style="margin-bottom:40px">
+<section style="padding-top:96px;padding-bottom:56px"><div class="container">
+  <div class="head-center" style="margin-bottom:16px">
     <span class="section-eyebrow">תיק עבודות</span>
-    <h1 class="section-title" style="margin:0 auto 12px">ראו אתרים שבנינו</h1>
-    <p class="section-sub" style="margin:0 auto 14px">גללו בין האתרים שיצרנו. כל אתר נטען בתצוגה מקדימה חיה.</p>
-    <p style="font-family:var(--font-mono);font-size:.76rem;color:var(--ink-faint);margin:0 auto 30px">✦ כל אתר כאן נבנה אישית, אחד אחד — לא מתבנית גנרית</p>
+    <h1 class="section-title" style="margin:0 auto 6px;font-size:clamp(1.6rem,3.6vw,2.3rem)">ראו אתרים שבנינו</h1>
+    <p class="section-sub" style="margin:0 auto 4px">גללו בין האתרים שיצרנו. כל אתר נטען בתצוגה מקדימה חיה.</p>
+    <p style="font-family:var(--font-mono);font-size:.76rem;color:var(--ink-faint);margin:0 auto">✦ כל אתר כאן נבנה אישית, אחד אחד — לא מתבנית גנרית</p>
   </div>
 
   <style>
     .carousel-wrap{position:relative;max-width:1000px;margin:0 auto}
     .carousel-slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:16px;border:1px solid var(--border)}
     .carousel-slides::-webkit-scrollbar{display:none}
-    .carousel-slide{flex:0 0 100%;scroll-snap-align:start;background:var(--surface);padding:20px}
+    .carousel-slide{flex:0 0 100%;scroll-snap-align:start;background:var(--surface);padding:16px}
     .slide-name{font-size:1.05rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+    .slide-name-link{color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color .15s}
+    .slide-name-link:hover{color:var(--signal)}
+    .slide-name-link span{font-size:.9em}
     .slide-url{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);direction:ltr}
-    .carousel-dots{display:flex;justify-content:center;gap:8px;margin-top:16px}
+    .carousel-iframe{width:100%;height:min(430px,55vh);border:1px solid var(--border);border-radius:12px}
+    .carousel-dots{display:flex;justify-content:center;gap:8px;margin-top:14px}
     .carousel-dot{width:10px;height:10px;border-radius:50%;background:var(--border);cursor:pointer;transition:.2s}
     .carousel-dot.active{background:var(--primary);width:28px;border-radius:100px}
     .carousel-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:var(--shadow-sm);transition:.2s;color:var(--ink)}
     .carousel-nav:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
     .carousel-prev{left:-18px}.carousel-next{right:-18px}
-    @media(max-width:760px){.carousel-nav{display:none}.carousel-slide{padding:12px}.carousel-iframe{height:350px!important}}
+    @media(max-width:760px){.carousel-nav{display:none}.carousel-slide{padding:12px}.carousel-iframe{height:min(340px,50vh)}}
   </style>
 
   <div class="carousel-wrap">
@@ -30,12 +34,12 @@
       <?php foreach ($sites as $i => $site): ?>
       <div class="carousel-slide" id="slide<?= $i ?>">
         <div class="slide-name">
-          <span><?= htmlspecialchars($site['name']) ?></span>
+          <a href="<?= htmlspecialchars($site['url']) ?>" target="_blank" rel="noopener" class="slide-name-link"><?= htmlspecialchars($site['name']) ?> <span aria-hidden="true">↗</span></a>
         </div>
         <?php if ($i === 0): ?>
-        <iframe src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
+        <iframe src="<?= $site['url'] ?>" class="carousel-iframe" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
         <?php else: ?>
-        <iframe data-src="<?= $site['url'] ?>" class="carousel-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
+        <iframe data-src="<?= $site['url'] ?>" class="carousel-iframe" title="<?= htmlspecialchars($site['name']) ?>"></iframe>
         <?php endif; ?>
       </div>
       <?php endforeach; ?>
