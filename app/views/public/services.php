@@ -24,6 +24,25 @@ $services = [
 $svcType = $serviceType ?? "index";
 $s = $services[$svcType] ?? $services["index"];
 ?>
+<style>
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:1050px;margin:0 auto}
+.svc-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;display:block;transition:all .25s;text-decoration:none;color:inherit}
+.svc-card:hover{border-color:var(--signal);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.svc-card .ic{font-size:1.6rem;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.svc-card .ic .tag{font-family:var(--font-mono);font-size:.62rem;font-weight:600;letter-spacing:.02em;color:var(--signal);background:var(--signal-soft);padding:2px 7px;border-radius:4px}
+.svc-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.svc-card p{color:var(--ink-soft);font-size:.92rem;line-height:1.6}
+
+.svc-long{max-width:750px;margin:0 auto 30px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.svc-long p{color:var(--ink-soft);font-size:.95rem;line-height:1.8}
+.svc-features{display:grid;grid-template-columns:1fr;gap:10px;max-width:700px;margin:0 auto}
+.svc-feature{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:.95rem}
+.svc-feature .check{color:var(--signal);font-weight:700;font-size:1.05rem;flex-shrink:0}
+
+.svc-cta{background:var(--ink);color:#fff;text-align:center}
+.svc-cta h2{font-size:1.8rem;font-weight:800;margin-bottom:14px}
+.svc-cta p{color:rgba(255,255,255,.65);max-width:480px;margin:0 auto 30px}
+</style>
 
 <section style="padding-top:140px"><div class="container">
   <div class="head-center" style="margin-bottom:50px">
@@ -33,12 +52,12 @@ $s = $services[$svcType] ?? $services["index"];
   </div>
 
 <?php if (isset($s["items"])): ?>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:1050px;margin:0 auto">
+<div class="svc-grid">
 <?php foreach ($s["items"] as $item): ?>
-<a href="<?= $url($item["url"]) ?>" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;display:block;transition:transform .25s,box-shadow .25s;text-decoration:none;color:inherit">
-  <div style="width:50px;height:50px;border-radius:12px;background:rgba(37,99,235,.09);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:16px"><?= $item["icon"] ?></div>
-  <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px"><?= $item["title"] ?></h3>
-  <p style="color:var(--ink-soft);font-size:.92rem;line-height:1.6"><?= $item["desc"] ?></p>
+<a href="<?= $url($item["url"]) ?>" class="svc-card">
+  <div class="ic"><span><?= $item["icon"] ?></span><span class="tag">כלול</span></div>
+  <h3><?= $item["title"] ?></h3>
+  <p><?= $item["desc"] ?></p>
 </a>
 <?php endforeach; ?>
 </div>
@@ -46,24 +65,24 @@ $s = $services[$svcType] ?? $services["index"];
 
 <?php if (isset($s["features"])): ?>
   <?php if (!empty($s["long"])): ?>
-  <div style="max-width:750px;margin:0 auto 30px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px">
-    <p style="color:var(--ink-soft);font-size:.95rem;line-height:1.8"><?= nl2br($s["long"]) ?></p>
+  <div class="svc-long">
+    <p><?= nl2br($s["long"]) ?></p>
   </div>
   <?php endif; ?>
-<div style="display:grid;grid-template-columns:1fr;gap:12px;max-width:700px;margin:0 auto">
+<div class="svc-features">
 <?php foreach ($s["features"] as $f): ?>
-<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:.95rem">
-  <span style="color:var(--success);font-weight:700;font-size:1.1rem">✓</span><?= $f ?>
+<div class="svc-feature">
+  <span class="check">✓</span><?= $f ?>
 </div>
 <?php endforeach; ?>
 </div>
 <?php endif; ?>
 </div></section>
 
-<section style="background:var(--primary-dark);color:#fff;text-align:center"><div class="container">
-  <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:14px">מוכנים להתחיל?</h2>
-  <p style="color:rgba(255,255,255,.75);max-width:480px;margin:0 auto 30px">הצטרפו עוד היום ותתחילו לראות תוצאות.</p>
-  <a href="<?= $url("contact") ?>" class="btn btn-primary btn-lg" style="background:#fff;color:var(--primary-dark)">צור קשר</a>
+<section class="svc-cta"><div class="container">
+  <h2>מוכנים להתחיל?</h2>
+  <p>הצטרפו עוד היום ותתחילו לראות תוצאות.</p>
+  <a href="<?= $url("contact") ?>" class="btn btn-primary btn-lg" style="background:#fff;color:var(--ink)">צור קשר</a>
 </div></section>
 
 <?php $content = ob_get_clean(); include __DIR__ . "/../partials/layout.php"; ?>

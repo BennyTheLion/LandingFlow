@@ -3,7 +3,8 @@
   <div class="head-center" style="margin-bottom:40px">
     <span class="section-eyebrow">תיק עבודות</span>
     <h1 class="section-title" style="margin:0 auto 12px">ראו אתרים שבנינו</h1>
-    <p class="section-sub" style="margin:0 auto 30px">גללו בין האתרים שיצרנו. כל אתר נטען בתצוגה מקדימה חיה.</p>
+    <p class="section-sub" style="margin:0 auto 14px">גללו בין האתרים שיצרנו. כל אתר נטען בתצוגה מקדימה חיה.</p>
+    <p style="font-family:var(--font-mono);font-size:.76rem;color:var(--ink-faint);margin:0 auto 30px">✦ כל אתר כאן נבנה אישית, אחד אחד — לא מתבנית גנרית</p>
   </div>
 
   <style>
