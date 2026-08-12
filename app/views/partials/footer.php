@@ -14,7 +14,7 @@
 <a href="https://wa.me/972528529448" target="_blank" rel="noopener" class="whatsapp-float" id="waFloat" aria-label="WhatsApp" title="דברו איתנו בוואטסאפ!">💬<span class="whatsapp-tooltip" id="waTooltip">דברו איתנו בוואטסאפ :-)</span></a>
 
 <!-- Accessibility Floating -->
-<button class="a11y-float" id="a11yToggle" aria-label="נגישות" title="תפריט נגישות">♿</button>
+<button class="a11y-float" id="a11yToggle" aria-label="נגישות" title="תפריט נגישות"><svg class="icon-line" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="6" r="2" fill="currentColor" stroke="none"></circle><path d="M6.5 10c3.5-1.2 7.5-1.2 11 0M12 11v4.5M9 20l3-4.5 3 4.5"></path></svg></button>
 <div class="a11y-panel" id="a11yPanel">
   <h4>הגדרות נגישות</h4>
   <button class="a11y-btn" onclick="document.body.classList.toggle('high-contrast')">ניגודיות גבוהה</button>

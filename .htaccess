@@ -1,7 +1,14 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /
+# No RewriteBase here on purpose: mod_rewrite auto-detects it from this
+# .htaccess file's own directory when none is set, which resolves correctly
+# both at a domain root (production) and when this project sits in a
+# subdirectory under a shared DocumentRoot (e.g. local XAMPP htdocs). Setting
+# RewriteBase / forces every rewrite target to resolve against the server
+# root, which breaks routing for every page but the homepage in the
+# subdirectory case (app/core/Request.php already computes the correct base
+# per-request via SCRIPT_NAME, so nothing else needs to change).
 
 # Deny direct access to backend/internal directories - none of these are
 # meant to be web-reachable now that the project root is the web root.
