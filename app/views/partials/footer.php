@@ -7,8 +7,53 @@
   </div>
   <div class="footer-col"><h4>שירותים</h4><ul><li><a href="<?= $url('demo') ?>">דמו חי</a></li><li><a href="<?= $url('portfolio') ?>">תיק עבודות</a></li><li><a href="<?= $url('audit') ?>">בדיקת אתר</a></li><li><a href="<?= $url('pricing') ?>">מחירים</a></li><li><a href="<?= $url('services') ?>">כל השירותים</a></li></ul></div>
   <div class="footer-col"><h4>חברה</h4><ul><li><a href="<?= $url('about') ?>">אודות</a></li><li><a href="<?= $url('pricing') ?>">תמחור</a></li><li><a href="<?= $url('blog') ?>">בלוג</a></li><li><a href="<?= $url('contact') ?>">צרו קשר</a></li></ul></div>
+  <div class="footer-col"><h4>מסמכים משפטיים</h4><ul><li><a href="<?= $url('privacy-policy') ?>">מדיניות פרטיות</a></li><li><a href="<?= $url('terms-of-service') ?>">תנאי שימוש</a></li><li><a href="<?= $url('cookie-policy') ?>">מדיניות עוגיות</a></li><li><a href="<?= $url('accessibility-statement') ?>">הצהרת נגישות</a></li><li><a href="<?= $url('fair-disclosure') ?>">גילוי נאות</a></li><li><a href="<?= $url('data-deletion') ?>">מחיקת מידע</a></li><li><a href="<?= $url('data-retention') ?>">שמירת מידע</a></li><li><a href="<?= $url('service-agreement') ?>">הסכם שירות</a></li><li><a href="<?= $url('maintenance-agreement') ?>">הסכם תחזוקה</a></li></ul></div>
   <div class="footer-col"><h4>צרו קשר</h4><ul><li><a href="tel:0528529448">052-8529448</a></li><li><a href="mailto:info@landingflow.co.il">info@landingflow.co.il</a></li></ul></div>
 </div><div class="container footer-bottom"><span>© <?= date("Y") ?> LandingFlow. כל הזכויות שמורות.</span><div class="footer-legal"><a href="<?= $url("terms-of-service") ?>">תנאי שימוש</a><a href="<?= $url("privacy-policy") ?>">פרטיות</a></div></div><div class="container" style="max-width:900px;margin:0 auto;padding:12px 20px 24px"><p style="font-size:.7rem;color:var(--ink-faint);text-align:center;line-height:1.6"><strong>⚠️ כתב ויתור (Disclaimer):</strong> LandingFlow אינה אחראית לתוצאות השימוש במידע, בכלים ובשירותים. כל המידע מוגש כשירות לציבור ואינו מהווה ייעוץ מקצועי או משפטי. תוצאות בדיקות האתר, ציוני הביקורת, תצוגות הדמו וההמלצות הן בגדר הערכה בלבד. המשתמש עושה זאת על אחריותו הבלעדית. השימוש באתר מהווה הסכמה <a href="<?= $url("terms-of-service") ?>" style="color:var(--primary)">לתנאי השימוש</a> ו<a href="<?= $url("privacy-policy") ?>" style="color:var(--primary)">למדיניות הפרטיות</a>. <a href="mailto:hello@landingflow.co.il" style="color:var(--primary)">info@landingflow.co.il</a></p></div></footer>
+
+<!-- Cookie Consent Banner -->
+<div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="הודעת עוגיות">
+  <div class="cookie-banner-inner">
+    <p>אנחנו משתמשים בעוגיות כדי לשפר את החוויה שלך באתר. המשך גלישה מהווה הסכמה ל<a href="<?= $url('cookie-policy') ?>">מדיניות העוגיות</a> שלנו.</p>
+    <div class="cookie-banner-actions">
+      <button type="button" id="cookieAccept" class="btn btn-primary btn-sm">קיבלתי</button>
+    </div>
+  </div>
+</div>
+<style>
+.cookie-banner{position:fixed;bottom:0;right:0;left:0;z-index:940;background:var(--ink);color:#fff;padding:16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.18);transform:translateY(100%);transition:transform .4s ease}
+.cookie-banner.visible{transform:translateY(0)}
+.cookie-banner-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.cookie-banner-inner p{font-size:.85rem;line-height:1.6;color:rgba(255,255,255,.85);margin:0;flex:1;min-width:240px}
+.cookie-banner-inner a{color:var(--signal);text-decoration:underline}
+.cookie-banner-actions{display:flex;gap:10px;flex-shrink:0}
+.cookie-banner-actions .btn-primary{background:var(--signal)}
+.cookie-banner-actions .btn-primary:hover{background:#189a5f}
+body.cookie-banner-active .whatsapp-float{bottom:100px;transition:bottom .3s}
+body.cookie-banner-active .a11y-float{bottom:164px;transition:bottom .3s}
+body.cookie-banner-active .agent-float{bottom:100px;transition:bottom .3s}
+@media(max-width:600px){
+  body.cookie-banner-active .whatsapp-float{bottom:130px}
+  body.cookie-banner-active .a11y-float{bottom:194px}
+  body.cookie-banner-active .agent-float{bottom:130px}
+}
+</style>
+<script>
+(function(){
+  var KEY='lf_cookie_consent';
+  var banner=document.getElementById('cookieBanner');
+  if(!banner)return;
+  if(!localStorage.getItem(KEY)){
+    document.body.classList.add('cookie-banner-active');
+    requestAnimationFrame(function(){banner.classList.add('visible')});
+  }
+  document.getElementById('cookieAccept').addEventListener('click',function(){
+    localStorage.setItem(KEY,'1');
+    banner.classList.remove('visible');
+    document.body.classList.remove('cookie-banner-active');
+  });
+})();
+</script>
 
 <!-- WhatsApp Floating -->
 <a href="https://wa.me/972528529448" target="_blank" rel="noopener" class="whatsapp-float" id="waFloat" aria-label="WhatsApp" title="דברו איתנו בוואטסאפ!">💬<span class="whatsapp-tooltip" id="waTooltip">דברו איתנו בוואטסאפ :-)</span></a>
