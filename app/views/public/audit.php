@@ -1,7 +1,31 @@
 <?php ob_start() ?>
-<section style="padding-top:140px"><div class="container">
-  <div class="head-center" style="margin-bottom:40px"><span class="section-eyebrow">בדיקת אתר חינם</span><h1 class="section-title" style="margin:0 auto 12px">בדקו את האתר שלכם עכשיו</h1><p class="section-sub" style="margin:0 auto 30px">הזינו URL ונקבל דוח מקיף על SEO, אבטחה, נגישות, דרישות משפטיות וביצועים.</p></div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:28px;max-width:600px;margin:0 auto;box-shadow:var(--shadow-md)">
+<style>
+.audit-hero{padding-top:96px;padding-bottom:40px}
+.audit-card-wrap{position:relative;max-width:600px;margin:0 auto}
+.audit-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:var(--shadow-lg)}
+.audit-stamp{position:absolute;top:-28px;left:-26px;width:100px;height:100px;transform:rotate(-10deg);mix-blend-mode:multiply;opacity:.9;pointer-events:none;z-index:2}
+@media(max-width:640px){.audit-stamp{width:76px;height:76px;top:-16px;left:-10px}}
+.audit-note{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:18px;font-family:var(--font-mono);font-size:.74rem;color:var(--ink-faint);letter-spacing:.01em}
+</style>
+<section class="audit-hero"><div class="container">
+  <div class="head-center" style="margin-bottom:20px"><span class="section-eyebrow">בדיקת אתר חינם</span><h1 class="section-title" style="margin:0 auto 6px;font-size:clamp(1.5rem,3.4vw,2.2rem)">בדקו את האתר שלכם עכשיו</h1><p class="section-sub" style="margin:0 auto">הזינו URL ונקבל דוח מקיף על SEO, אבטחה, נגישות, דרישות משפטיות וביצועים.</p></div>
+  <div class="audit-card-wrap">
+    <svg class="audit-stamp" viewBox="0 0 140 140" aria-hidden="true">
+      <defs>
+        <filter id="inkRoughAudit" x="-30%" y="-30%" width="160%" height="160%">
+          <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"/>
+        </filter>
+        <path id="stampRingAudit" d="M70,70 m-54,0 a54,54 0 1,1 108,0 a54,54 0 1,1 -108,0"/>
+      </defs>
+      <g filter="url(#inkRoughAudit)">
+        <circle cx="70" cy="70" r="62" fill="none" stroke="var(--stamp)" stroke-width="2.5"/>
+        <circle cx="70" cy="70" r="48" fill="none" stroke="var(--stamp)" stroke-width="1.5"/>
+      </g>
+      <text font-size="12.5" font-weight="700" fill="var(--stamp)" letter-spacing="1.3" direction="ltr" style="unicode-bidi:bidi-override"><textPath href="#stampRingAudit" startOffset="2%">דבלב היצמוטוא אל ✦ תישיא קדבנ ✦</textPath></text>
+      <text x="70" y="78" text-anchor="middle" font-family="var(--font-serif)" font-weight="900" font-size="27" fill="var(--stamp)">LF</text>
+    </svg>
+    <div class="audit-card">
     <form id="af"><?= $csrf() ?><div class="form-group"><label>כתובת האתר *</label><input type="url" name="url" id="au" placeholder="https://example.com" required style="direction:ltr;text-align:left;font-family:var(--font-mono)"></div>
     <div class="form-group"><label>אימייל לקבלת הדוח *</label><div style="display:flex;gap:8px"><input type="email" name="email" id="ae" placeholder="your@email.com" required style="direction:ltr;text-align:left;flex:1"><button type="button" id="sendCodeBtn" class="btn btn-secondary" style="white-space:nowrap">שלח קוד אימות</button></div></div>
     <div id="codeRow" class="form-group" style="display:none"><label>קוד אימות</label><input type="text" name="code" id="ac" placeholder="הזן קוד בן 6 ספרות" maxlength="6" style="direction:ltr;text-align:center;font-family:var(--font-mono);font-size:1.2rem;letter-spacing:4px"><p style="font-size:.78rem;color:var(--success);margin-top:4px" id="codeMsg"></p></div>
@@ -20,6 +44,8 @@
       <div id="de"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px"><button type="button" id="pl" class="btn btn-primary">📧 שלח דוח למייל</button><a id="wl" href="#" class="btn btn-ghost" target="_blank">💬 שלח בוואטסאפ</a></div>
     </div>
+    </div>
+    <p class="audit-note">✦ כל דוח נבדק אישית — לא רק אוטומציה שיורקת ציון</p>
   </div>
 </div></section>
 <script>

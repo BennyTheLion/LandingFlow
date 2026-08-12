@@ -12,19 +12,18 @@
 .value-section p{color:var(--ink-soft);font-size:.95rem;line-height:1.7;max-width:700px;margin:0 auto}
 .value-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:28px}
 .value-item{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--ink-soft)}
-.value-item .icon{font-size:1.1rem;width:36px;height:36px;border-radius:8px;background:rgba(37,99,235,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.value-item .icon{font-size:1.1rem;width:36px;height:36px;border-radius:8px;background:var(--signal-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 .plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:1100px;margin:0 auto 0}
 .plan-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:36px 28px;position:relative;transition:all .25s;display:flex;flex-direction:column}
 .plan-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
-.plan-card.featured{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),var(--shadow-md)}
-.plan-card.featured:hover{box-shadow:0 0 0 1px var(--primary),var(--shadow-lg)}
-.plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;padding:5px 18px;border-radius:100px;white-space:nowrap}
-.plan-color{display:inline-block;width:12px;height:12px;border-radius:4px;margin-left:6px;vertical-align:middle}
-.c-start{border-top:4px solid var(--primary)}
-.c-business{border-top:4px solid var(--primary-2)}
-.c-premium{border-top:4px solid var(--ink-soft)}
-.c-enterprise{border-top:4px solid var(--primary-dark)}
+.plan-card.featured{border-color:var(--stamp);box-shadow:0 0 0 1px var(--stamp),var(--shadow-md)}
+.plan-card.featured:hover{box-shadow:0 0 0 1px var(--stamp),var(--shadow-lg)}
+.plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--stamp);color:#fff;font-size:.72rem;font-weight:700;padding:5px 18px;border-radius:100px;white-space:nowrap}
+.c-start{border-top:4px solid var(--border)}
+.c-business{border-top:4px solid var(--stamp)}
+.c-premium{border-top:4px solid var(--border)}
+.c-enterprise{border-top:4px solid var(--border)}
 .plan-name{font-size:1.2rem;font-weight:800;margin-bottom:4px}
 .plan-desc{font-size:.8rem;color:var(--ink-faint);margin-bottom:20px}
 .plan-price-setup{font-size:.85rem;color:var(--ink-soft);margin-bottom:2px}
@@ -49,7 +48,7 @@
 .compare-table th,.compare-table td{padding:12px 16px;text-align:center;border-bottom:1px solid var(--border)}
 .compare-table th{background:var(--surface-2);font-weight:700;color:var(--ink-soft);font-size:.75rem;text-transform:uppercase}
 .compare-table td:first-child,.compare-table th:first-child{text-align:right;font-weight:700;background:var(--surface);color:var(--ink)}
-.compare-table tr:hover td{background:rgba(37,99,235,.03)}
+.compare-table tr:hover td{background:rgba(31,170,109,.05)}
 .compare-table .yes{color:var(--success);font-weight:700}
 .compare-table .no{color:var(--ink-faint)}
 
@@ -59,14 +58,15 @@
 .extra-item{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem}
 .extra-price{font-family:var(--font-mono);font-weight:700;color:var(--primary);white-space:nowrap}
 
-.positioning{background:linear-gradient(135deg,var(--primary),var(--ink));color:#fff;border-radius:var(--radius-lg);padding:48px 32px;max-width:900px;margin:0 auto 0;text-align:center}
-.positioning h2{font-size:1.5rem;font-weight:800;margin-bottom:12px}
-.positioning p{font-size:1.05rem;opacity:.9;line-height:1.6;max-width:650px;margin:0 auto}
+.positioning{max-width:680px;margin:0 auto;padding:20px 24px;text-align:center}
+.positioning blockquote{font-family:var(--font-serif);font-size:clamp(1.2rem,2.8vw,1.6rem);font-weight:700;line-height:1.55;color:var(--ink)}
+.positioning cite{display:block;margin-top:16px;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-faint);font-style:normal}
+.positioning p.sub{color:var(--ink-soft);font-size:.95rem;line-height:1.65;max-width:560px;margin:16px auto 0}
 
 .cta-section{text-align:center;padding:48px 0 40px}
 .cta-section h2{font-size:1.6rem;font-weight:800;margin-bottom:12px}
 .cta-section p{color:var(--ink-soft);font-size:1rem;margin-bottom:28px}
-.cta-highlight{display:inline-flex;align-items:center;gap:8px;background:rgba(22,163,74,.1);color:var(--success);font-size:.85rem;font-weight:700;padding:8px 18px;border-radius:100px;margin-bottom:20px}
+.cta-highlight{display:inline-flex;align-items:center;gap:8px;background:var(--stamp-soft);color:var(--stamp);font-size:.85rem;font-weight:700;padding:8px 18px;border-radius:100px;margin-bottom:20px}
 </style>
 
 <!-- HERO -->
@@ -107,7 +107,7 @@
   <div class="plans-grid">
     <!-- START -->
     <div class="plan-card c-start">
-      <div class="plan-name">🟢 START</div>
+      <div class="plan-name">START</div>
       <div class="plan-desc">לעסקים בתחילת הדרך</div>
       <div class="plan-price-options">
         <div class="price-option">
@@ -137,8 +137,8 @@
 
     <!-- BUSINESS -->
     <div class="plan-card c-business featured">
-      <div class="plan-badge">⭐ הכי פופולרי</div>
-      <div class="plan-name">🔵 BUSINESS</div>
+      <div class="plan-badge">⭐ ההמלצה שלי</div>
+      <div class="plan-name">BUSINESS</div>
       <div class="plan-desc">לעסקים שרוצים לגדול</div>
       <div class="plan-price-options">
         <div class="price-option">
@@ -169,7 +169,7 @@
 
     <!-- PREMIUM -->
     <div class="plan-card c-premium">
-      <div class="plan-name">🟣 PREMIUM</div>
+      <div class="plan-name">PREMIUM</div>
       <div class="plan-desc">לעסקים שרוצים אוטומציה מלאה</div>
       <div class="plan-price-options">
         <div class="price-option">
@@ -199,7 +199,7 @@
 
     <!-- ENTERPRISE -->
     <div class="plan-card c-enterprise">
-      <div class="plan-name">🔴 ENTERPRISE</div>
+      <div class="plan-name">ENTERPRISE</div>
       <div class="plan-desc">פתרונות מותאמים לארגונים</div>
       <div class="plan-price-options">
         <div class="price-option">
@@ -277,14 +277,15 @@
 <!-- POSITIONING -->
 <section><div class="container">
   <div class="positioning">
-    <h2>"אני לא בונה אתרים — אני בונה מערכות דיגיטליות שמביאות לידים לעסק שלך"</h2>
-    <p>האתר שלך הוא לא עוד פרויקט שאני מסיים ועוזב. זאת מערכת חיה שאני מתחזק, משפר ומנטר — כדי שהיא תמשיך להביא לך לקוחות כל חודש.</p>
+    <blockquote>"אני לא בונה אתרים — אני בונה מערכות דיגיטליות שמביאות לידים לעסק שלך."</blockquote>
+    <cite>— מייסד LandingFlow</cite>
+    <p class="sub">האתר שלך הוא לא עוד פרויקט שאני מסיים ועוזב. זאת מערכת חיה שאני מתחזק, משפר ומנטר — כדי שהיא תמשיך להביא לך לקוחות כל חודש.</p>
   </div>
 </div></section>
 
 <!-- CTA -->
 <section class="cta-section"><div class="container">
-  <div class="cta-highlight">✅ עסקים כבר עובדים איתי</div>
+  <div class="cta-highlight">📞 מענה אישי — לא צוות מכירות</div>
   <h2>מוכן להתחיל לקבל לידים?</h2>
   <p>השאירו פרטים וניצור קשר תוך 24 שעות עם הצעה מותאמת</p>
   <div class="hero-ctas">
