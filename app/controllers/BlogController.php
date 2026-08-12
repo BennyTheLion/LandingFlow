@@ -7,13 +7,13 @@ class BlogController extends Controller
 {
     public function index(): string
     {
-        return $this->render('public/blog', ['pageTitle' => 'Blog � LandingFlow']);
+        return $this->render('public/blog', ['pageTitle' => 'בלוג — LandingFlow']);
     }
 
     public function show(string $slug): string
     {
         return $this->render('public/blog-post', [
-            'pageTitle' => 'Blog Post � LandingFlow',
+            'pageTitle' => 'בלוג — LandingFlow',
             'slug' => $slug,
         ]);
     }
