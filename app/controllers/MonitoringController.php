@@ -116,7 +116,7 @@ class MonitoringController extends Controller
         if (!$site) { $this->redirect('admin/monitoring'); }
 
         $monitor = new MonitoringService();
-        $monitor->runCheckAndPersist($site, $this->db());
+        $monitor->runCheckAndPersist($site, $this->db(), 10);
 
         Session::flash('success', 'הבדיקה הושלמה.');
         $this->redirect("admin/monitoring");

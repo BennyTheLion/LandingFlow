@@ -35,7 +35,7 @@ $checked = 0;
 
 foreach ($sites as $site) {
     try {
-        $monitor->runCheckAndPersist($site, $db);
+        $monitor->runCheckAndPersist($site, $db, 10);
         $checked++;
     } catch (\Throwable $e) {
         Logger::error('monitor-run: check failed', ['website_id' => $site['id'], 'url' => $site['url'], 'message' => $e->getMessage()]);
