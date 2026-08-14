@@ -76,6 +76,7 @@ class AuthController extends Controller
 
     public function resetPassword(): void
     {
+        if (!$this->validateCsrf()) { Session::flash('error', 'שגיאת אבטחה. אנא נסה שוב.'); $this->redirect('login'); }
         $token = $this->request->input('token'); $password = $this->request->input('password'); $confirm = $this->request->input('password_confirm');
         if (empty($token)) { Session::flash('error', 'קישור לא תקין או שפג תוקפו.'); $this->redirect('login'); }
         $result = $this->auth->resetPassword($token, $password, $confirm);

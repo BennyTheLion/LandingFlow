@@ -69,11 +69,18 @@ class AuthService
     /**
      * @return array{success: bool, user: ?User, error: ?string}
      */
+    /** Never a real password hash — only exists so login() takes the same time whether or not the account exists. */
+    private const DUMMY_HASH = '$2y$12$9a/sCOxH8YeTGR.izjuOoObGc6I6PMiZ.LbXv1pMOrHbPkBSL2pNm';
+
     public function login(string $email, string $password, string $ip): array
     {
         $user = $this->userRepo->findByEmail($email);
 
-        if (!$user || $user->status !== 'active' || !$user->verifyPassword($password)) {
+        // Always run password_verify(), even for a nonexistent account, so response
+        // timing can't be used to enumerate which emails are registered.
+        $passwordOk = password_verify($password, $user?->password ?? self::DUMMY_HASH);
+
+        if (!$user || $user->status !== 'active' || !$passwordOk) {
             return ['success' => false, 'user' => null, 'error' => 'אימייל או סיסמה שגויים.'];
         }
 

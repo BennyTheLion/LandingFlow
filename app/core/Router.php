@@ -49,14 +49,14 @@ class Router
         
         // Authentication
         $this->get('/login', 'AuthController@loginForm');
-        $this->post('/login', 'AuthController@login');
+        $this->post('/login', 'AuthController@login', ['LoginRateLimitMiddleware']);
         $this->get('/register', 'AuthController@registerForm');
-        $this->post('/register', 'AuthController@register');
+        $this->post('/register', 'AuthController@register', ['LoginRateLimitMiddleware']);
         $this->get('/logout', 'AuthController@logout');
         $this->get('/forgot-password', 'AuthController@forgotPasswordForm');
-        $this->post('/forgot-password', 'AuthController@forgotPassword');
+        $this->post('/forgot-password', 'AuthController@forgotPassword', ['LoginRateLimitMiddleware']);
         $this->get('/reset-password/{token}', 'AuthController@resetPasswordForm');
-        $this->post('/reset-password', 'AuthController@resetPassword');
+        $this->post('/reset-password', 'AuthController@resetPassword', ['LoginRateLimitMiddleware']);
         $this->get('/verify-email/{token}', 'AuthController@verifyEmail');
 
         // Admin Area
