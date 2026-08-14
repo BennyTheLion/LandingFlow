@@ -76,6 +76,21 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://landingflow.co.il/blog/israeli-website-accessibility-law-guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://landingflow.co.il/blog/freelancer-vs-web-agency-israel</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://landingflow.co.il/blog/website-cost-small-business-israel</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://landingflow.co.il/privacy-policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

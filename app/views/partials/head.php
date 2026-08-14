@@ -1,4 +1,33 @@
-<?php ob_start() ?><!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"><title><?= htmlspecialchars($pageTitle ?? 'LandingFlow') ?></title><meta name="description" content="<?= htmlspecialchars($pageDescription ?? '') ?>"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&family=Heebo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet"><style>
+<?php ob_start() ?><!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"><title><?= htmlspecialchars($pageTitle ?? 'LandingFlow') ?></title><meta name="description" content="<?= htmlspecialchars($pageDescription ?? '') ?>">
+<?php
+$currentUrl = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'landingflow.co.il') . ($_SERVER['REQUEST_URI'] ?? '/');
+$ogTitle = $pageTitle ?? 'LandingFlow';
+$ogDesc = $pageDescription ?? 'פתרונות טכנולוגיים לעסק שלך, בליווי אישי צמוד — דפי נחיתה, פיתוח אתרים, ניטור 24/7 ו-CRM.';
+?>
+<link rel="canonical" href="<?= htmlspecialchars($currentUrl) ?>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LandingFlow">
+<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="<?= htmlspecialchars($ogTitle) ?>">
+<meta property="og:description" content="<?= htmlspecialchars($ogDesc) ?>">
+<meta property="og:url" content="<?= htmlspecialchars($currentUrl) ?>">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="<?= htmlspecialchars($ogTitle) ?>">
+<meta name="twitter:description" content="<?= htmlspecialchars($ogDesc) ?>">
+<script type="application/ld+json"><?= json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => 'LandingFlow',
+    'url' => 'https://landingflow.co.il',
+    'telephone' => '+972528529448',
+    'email' => 'info@landingflow.co.il',
+    'sameAs' => [
+        'https://www.linkedin.com/company/landingflow',
+        'https://www.instagram.com/landingflow',
+        'https://www.facebook.com/landingflow',
+    ],
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&family=Heebo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet"><style>
 :root{--bg:#F7F6F3;--surface:#FFFFFF;--surface-2:#EFEDE8;--border:#E5E3DE;--ink:#16181C;--ink-soft:#5B5F66;--ink-faint:#9A9D9F;--primary:#16181C;--primary-2:#3B3B3B;--primary-dark:#000000;--signal:#1FAA6D;--signal-soft:#E4F5EC;--stamp:#A63A2E;--stamp-soft:#F3E4E1;--success:#16A34A;--warning:#F59E0B;--danger:#DC2626;--info:#0EA5E9;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow-md:0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 12px 40px rgba(0,0,0,.08);--container:1200px;--font-display:"Heebo","system-ui",-apple-system,sans-serif;--font-serif:"Frank Ruhl Libre",serif;--font-mono:"IBM Plex Mono",monospace}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px;overflow-x:hidden}body{font-family:var(--font-display);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}a{color:inherit;text-decoration:none}ul{list-style:none}button{font-family:inherit;cursor:pointer;border:none;background:none}.container{max-width:var(--container);margin:0 auto;padding:0 24px}section{padding:80px 0}@media(min-width:760px){section{padding:120px 0}}
 h1,h2{font-family:var(--font-serif)}
