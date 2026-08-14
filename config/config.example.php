@@ -36,6 +36,9 @@ define('SMTP_PASS', '');
 define('SMTP_FROM', 'noreply@landingflow.co.il');
 define('SMTP_FROM_NAME', 'LandingFlow');
 
+// Monitoring alerts + weekly digest recipient
+define('ALERT_EMAIL', 'noreply@landingflow.co.il');
+
 // Upload
 define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
 

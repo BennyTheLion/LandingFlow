@@ -33,7 +33,7 @@
 <div class="top-bar"><h1>📡 ניטור אתרים</h1>
 <form method="POST" action="<?= $url('admin/monitoring/add') ?>" class="add-form">
 <?= $csrf() ?><input type="text" name="name" placeholder="שם האתר" required><input type="url" name="url" placeholder="https://..." required>
-<select name="check_interval"><option value="5">5 דק'</option><option value="15">15 דק'</option><option value="30">30 דק'</option><option value="60" selected>60 דק'</option></select>
+<select name="check_interval"><option value="1">1 דק'</option><option value="5">5 דק'</option><option value="15">15 דק'</option><option value="30">30 דק'</option><option value="60" selected>60 דק'</option></select>
 <button type="submit">+ הוסף</button>
 </form>
 </div>
@@ -57,7 +57,18 @@
 <td style="direction:ltr;text-align:left;font-size:.78rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= htmlspecialchars($s['url']) ?></td>
 <td><span class="dot dot-<?= $s['status'] ?>"></span> <?= $s['status'] ?></td>
 <td><?= isset($s['response_time_ms']) ? $s['response_time_ms'].'ms' : '-' ?></td>
-<td><?= ($s['ssl_valid']??null)===true?'🔒':(($s['ssl_valid']??null)===false?'⚠️':'-') ?></td>
+<td>
+<?php if (($s['source']??'')==='demo'): ?>
+<?= ($s['ssl_valid']??null)===true?'🔒':(($s['ssl_valid']??null)===false?'⚠️':'-') ?>
+<?php else:
+  $sslStatus = $s['ssl_status'] ?? 'not_configured';
+  $sslIcon = match ($sslStatus) { 'valid' => '🔒', 'expiring_soon' => '⏳', 'expired' => '❌', default => '⚠️' };
+  $sslTitle = ['valid' => 'תקין', 'expiring_soon' => 'עומד לפוג', 'expired' => 'פג תוקף', 'not_configured' => 'לא מוגדר'][$sslStatus] ?? $sslStatus;
+  if (!empty($s['ssl_expires_at'])) $sslTitle .= ' — עד ' . $s['ssl_expires_at'];
+?>
+<span title="<?= htmlspecialchars($sslTitle) ?>"><?= $sslIcon ?></span>
+<?php endif; ?>
+</td>
 <td><span class="score <?= ($s['seo_score']??0)>=70?'good':(($s['seo_score']??0)>=40?'warn':'bad') ?>"><?= $s['seo_score']??'-' ?></span></td>
 <td><span class="score <?= ($s['security_score']??0)>=70?'good':(($s['security_score']??0)>=40?'warn':'bad') ?>"><?= $s['security_score']??'-' ?></span></td>
 <td style="font-size:.75rem;color:var(--ink-soft)"><?= $s['last_checked_at'] ? date('d/m H:i', strtotime($s['last_checked_at'])) : 'טרם' ?></td>

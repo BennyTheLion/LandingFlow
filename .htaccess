@@ -12,7 +12,7 @@ RewriteEngine On
 
 # Deny direct access to backend/internal directories - none of these are
 # meant to be web-reachable now that the project root is the web root.
-RewriteRule ^(app|config|database|storage|vendor|docs|tests|rules|prompts|engine|templates|components|\.git|\.claude)(/|$) - [F,L]
+RewriteRule ^(app|bin|config|database|storage|vendor|docs|tests|rules|prompts|engine|templates|components|\.git|\.claude)(/|$) - [F,L]
 
 # Redirect trailing slashes
 RewriteCond %{REQUEST_FILENAME} !-d

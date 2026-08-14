@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Core\Database;
+use App\Core\Logger;
 use App\Services\MonitoringService;
 
 class MonitoringController extends Controller
@@ -45,8 +46,18 @@ class MonitoringController extends Controller
             }
         }
 
-        // Run real checks only on monitored sites (cached 5min per site, 5s timeout)
-        $checkedMonitored = $monitor->checkAll($monitoredOnly, 5);
+        // Run real checks only on monitored sites (cached 5min per site, 5s timeout), persisting each result
+        $checkedMonitored = [];
+        foreach ($monitoredOnly as $s) {
+            if (empty($s['last_checked_at']) || strtotime($s['last_checked_at']) < time() - 300) {
+                try {
+                    $s = $monitor->runCheckAndPersist($s, $this->db(), 5);
+                } catch (\Throwable $e) {
+                    Logger::error('monitoring: auto-check failed', ['website_id' => $s['id'], 'message' => $e->getMessage()]);
+                }
+            }
+            $checkedMonitored[] = $s;
+        }
 
         // Merge: monitored + demo (demo always after monitored)
         $merged = array_merge($checkedMonitored, array_slice($sites, count($monitoredOnly)));
@@ -105,17 +116,7 @@ class MonitoringController extends Controller
         if (!$site) { $this->redirect('admin/monitoring'); }
 
         $monitor = new MonitoringService();
-        $c = $monitor->checkSingle($site['url']);
-
-        // Save log
-        $this->db()->prepare(
-            "INSERT INTO monitoring_logs (website_id, status, response_time_ms, checked_at) VALUES (?,?,?,NOW())"
-        )->execute([$site['id'], $c['status'], $c['response_time_ms'] ?? 0]);
-
-        // Update site
-        $this->db()->prepare(
-            "UPDATE monitoring_websites SET status=?, response_time_ms=?, last_checked_at=NOW(), updated_at=NOW() WHERE id=?"
-        )->execute([$c['status'], $c['response_time_ms'] ?? 0, $id]);
+        $monitor->runCheckAndPersist($site, $this->db());
 
         Session::flash('success', 'הבדיקה הושלמה.');
         $this->redirect("admin/monitoring");

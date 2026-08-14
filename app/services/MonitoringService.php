@@ -17,6 +17,11 @@ class MonitoringService
         $result['response_ms'] = round(($end - $start) * 1000);
         $result['status'] = ($result['http_code'] >= 200 && $result['http_code'] < 400) ? 'online' : 'issues';
         $result['ssl_valid'] = str_starts_with($url, 'https');
+        $result['ssl'] = ['expires_at' => null, 'days_left' => null, 'status' => 'not_configured'];
+        if ($result['ssl_valid']) {
+            $host = parse_url($url, PHP_URL_HOST);
+            if ($host) $result['ssl'] = $this->checkSslCertificate($host);
+        }
         $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         $headersRaw = substr($response, 0, $headerSize);
         $body = substr($response, $headerSize);
@@ -30,20 +35,69 @@ class MonitoringService
     public function checkSingle(string $url, int $timeout = 10): array
     {
         $c = $this->check($url, $timeout);
-        return ['status' => $c['status'], 'response_time_ms' => $c['response_ms'], 'http_code' => $c['http_code'], 'ssl_valid' => $c['ssl_valid'], 'seo_score' => $c['seo']['score'], 'seo_issues' => $c['seo']['issues'], 'security_score' => $c['security']['score'], 'security_issues' => $c['security']['issues'], 'last_checked_at' => date('Y-m-d H:i:s'), 'error' => $c['error']];
+        return ['status' => $c['status'], 'response_time_ms' => $c['response_ms'], 'http_code' => $c['http_code'], 'ssl_valid' => $c['ssl_valid'], 'ssl_expires_at' => $c['ssl']['expires_at'] ?? null, 'ssl_status' => $c['ssl']['status'] ?? 'not_configured', 'seo_score' => $c['seo']['score'], 'seo_issues' => $c['seo']['issues'], 'security_score' => $c['security']['score'], 'security_issues' => $c['security']['issues'], 'last_checked_at' => date('Y-m-d H:i:s'), 'error' => $c['error']];
     }
 
-    public function checkAll(array $sites, int $timeout = 10): array
+    /**
+     * Look up the real certificate expiry for an https host (no dependency on the
+     * app's own curl request, since curl doesn't expose certificate validity dates).
+     */
+    public function checkSslCertificate(string $host, int $timeout = 5): array
     {
-        $checked = [];
-        foreach ($sites as $s) {
-            if (empty($s['last_checked_at']) || strtotime($s['last_checked_at']) < time() - 300) {
-                try { $c = $this->checkSingle($s['url'], $timeout); } catch (\Throwable $e) { $c = ['status' => 'error', 'response_time_ms' => null, 'error' => $e->getMessage(), 'seo_score' => null, 'security_score' => null, 'ssl_valid' => false, 'last_checked_at' => date('Y-m-d H:i:s')]; }
-                $s = array_merge($s, $c);
-            }
-            $checked[] = $s;
-        }
-        return $checked;
+        $result = ['expires_at' => null, 'days_left' => null, 'status' => 'not_configured'];
+        $context = stream_context_create(['ssl' => ['capture_peer_cert' => true, 'verify_peer' => false, 'verify_peer_name' => false]]);
+        $client = @stream_socket_client("ssl://{$host}:443", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $context);
+        if (!$client) return $result;
+        $params = stream_context_get_params($client);
+        fclose($client);
+        $cert = $params['options']['ssl']['peer_certificate'] ?? null;
+        if (!$cert) return $result;
+        $info = openssl_x509_parse($cert);
+        $validTo = $info['validTo_time_t'] ?? null;
+        if (!$validTo) return $result;
+        $daysLeft = (int)floor(($validTo - time()) / 86400);
+        $result['expires_at'] = date('Y-m-d', $validTo);
+        $result['days_left'] = $daysLeft;
+        $result['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 14 ? 'expiring_soon' : 'valid');
+        return $result;
+    }
+
+    /**
+     * Single entry point for "check a site and persist the result" used by the manual
+     * check-now button, the admin page's auto-refresh, and the cron script alike — keeps
+     * monitoring_logs status values in sync with its ENUM('up','down') and uptime_percentage
+     * actually up to date, and fires alerts on real status/SSL transitions.
+     */
+    public function runCheckAndPersist(array $site, \PDO $db, int $timeout = 5): array
+    {
+        $c = $this->checkSingle($site['url'], $timeout);
+        $logStatus = $c['status'] === 'online' ? 'up' : 'down';
+        $db->prepare(
+            "INSERT INTO monitoring_logs (website_id, status, http_code, response_time_ms, error_message, checked_at) VALUES (?,?,?,?,?,NOW())"
+        )->execute([$site['id'], $logStatus, $c['http_code'] ?: null, $c['response_time_ms'], $c['error']]);
+
+        $counts = $db->prepare(
+            "SELECT COUNT(*) AS total, SUM(status='up') AS ups FROM monitoring_logs WHERE website_id = ? AND checked_at >= NOW() - INTERVAL 30 DAY"
+        );
+        $counts->execute([$site['id']]);
+        $row = $counts->fetch(\PDO::FETCH_ASSOC);
+        $uptime = ($row && $row['total'] > 0) ? round(($row['ups'] / $row['total']) * 100, 2) : 100.00;
+
+        $previousStatus = $site['status'] ?? null;
+
+        $db->prepare(
+            "UPDATE monitoring_websites SET status=?, response_time_ms=?, ssl_expires_at=?, ssl_status=?, uptime_percentage=?, last_checked_at=NOW(), updated_at=NOW() WHERE id=?"
+        )->execute([$c['status'], $c['response_time_ms'], $c['ssl_expires_at'], $c['ssl_status'], $uptime, $site['id']]);
+
+        $site = array_merge($site, $c, ['uptime_percentage' => $uptime]);
+
+        $alerts = new MonitoringAlertService();
+        if ($previousStatus !== null && $previousStatus !== 'offline' && $c['status'] === 'offline') $alerts->down($site);
+        if ($previousStatus === 'offline' && $c['status'] === 'online') $alerts->up($site);
+        if ($c['ssl_status'] === 'expiring_soon') $alerts->sslExpiring($site);
+        if (($c['response_time_ms'] ?? 0) > 3000) $alerts->slowResponse($site);
+
+        return $site;
     }
 
     public function generateRecommendations(array $data): array
