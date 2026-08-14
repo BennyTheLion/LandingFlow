@@ -22,6 +22,9 @@ class Router
         $this->get('/services/website-development', 'ServiceController@websiteDevelopment');
         $this->get('/services/landing-pages', 'ServiceController@landingPages');
         $this->get('/services/hosting', 'ServiceController@hosting');
+        $this->get('/services/monitoring', 'ServiceController@monitoring');
+        $this->get('/services/crm', 'ServiceController@crm');
+        $this->get('/services/reports', 'ServiceController@reports');
         $this->get('/pricing', 'PageController@pricing');
         $this->get('/about', 'PageController@about');
         $this->get('/portfolio', 'PageController@portfolio');

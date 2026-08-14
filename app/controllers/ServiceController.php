@@ -44,4 +44,20 @@ class ServiceController extends Controller
             'serviceType' => 'monitoring',
         ]);
     }
+
+    public function crm(): string
+    {
+        return $this->render('public/services', [
+            'pageTitle' => 'CRM ולידים — LandingFlow',
+            'serviceType' => 'crm',
+        ]);
+    }
+
+    public function reports(): string
+    {
+        return $this->render('public/services', [
+            'pageTitle' => 'דוחות חכמים — LandingFlow',
+            'serviceType' => 'reports',
+        ]);
+    }
 }
