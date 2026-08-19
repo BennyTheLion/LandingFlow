@@ -74,6 +74,7 @@ class AuditController extends Controller
             $db->prepare("INSERT INTO audit_reports (url,overall_score,seo_score,security_score,legal_score,accessibility_score,performance_score,spam_score,total_checks,passed_checks,failed_checks,full_report,recommendations,status,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'completed',?,?,NOW())")
                ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode($results, JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
             $rid = $db->lastInsertId();
+            $this->rememberReportId((int)$rid);
         } catch (\Throwable $e) {
             Logger::error('audit: failed to save audit_reports row', ['message' => $e->getMessage()]);
         }
@@ -105,6 +106,36 @@ class AuditController extends Controller
         $parsed = parse_url($url);
         $urlInfo = ['url' => $url, 'protocol' => $parsed['scheme'] ?? '', 'domain' => $parsed['host'] ?? '', 'tld' => substr((string)strrchr($parsed['host'] ?? '', '.'), 1) ?: '', 'has_www' => str_starts_with($parsed['host'] ?? '', 'www.'), 'path' => $parsed['path'] ?? ''];
         die(json_encode(['success'=>true,'overall'=>$ovr,'reportId'=>$rid,'responseTime'=>$rt,'emailed'=>$emailed,'urlInfo'=>$urlInfo,'results'=>$results,'recommendations'=>$recs], JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Report IDs this session produced.
+     *
+     * audit_reports.id is a sequential integer on unauthenticated routes, so
+     * without this anyone could post a guessed id and have someone else's report
+     * emailed to an address of their choosing — a data leak and a way to send mail
+     * from our SMTP account. Ownership is per-session: you can act on a report if
+     * your browser is the one that ran the scan.
+     */
+    private function ownedReportIds(): array
+    {
+        $ids = Session::get('audit_report_ids', []);
+        return is_array($ids) ? array_map('intval', $ids) : [];
+    }
+
+    private function rememberReportId(int $id): void
+    {
+        if ($id <= 0) return;
+        $ids = $this->ownedReportIds();
+        if (in_array($id, $ids, true)) return;
+        $ids[] = $id;
+        // Bounded — a session has no reason to hoard scans
+        Session::set('audit_report_ids', array_slice($ids, -20));
+    }
+
+    private function ownsReport(int $id): bool
+    {
+        return $id > 0 && in_array($id, $this->ownedReportIds(), true);
     }
 
     /** Send 6-digit verification code to email */
@@ -228,6 +259,11 @@ class AuditController extends Controller
      */
     public function download(string $id): void
     {
+        // 404 rather than 403 — no reason to confirm which ids exist
+        if (!$this->ownsReport((int)$id)) {
+            throw new \App\Core\Exceptions\NotFoundException();
+        }
+
         $db = Database::getInstance()->getConnection();
         $r = $db->prepare("SELECT * FROM audit_reports WHERE id = ?");
         $r->execute([(int)$id]);
@@ -275,6 +311,13 @@ class AuditController extends Controller
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             http_response_code(422);
             die(json_encode(['success' => false, 'error' => 'נא להזין אימייל תקין']));
+        }
+        // The recipient is caller-supplied by design, so the report must be one this
+        // browser actually produced — otherwise this endpoint mails arbitrary reports
+        // to arbitrary addresses.
+        if (!$this->ownsReport($id)) {
+            http_response_code(403);
+            die(json_encode(['success' => false, 'error' => 'ניתן לשלוח רק דוח שהופק בדפדפן הזה. הריצו את הבדיקה מחדש.'], JSON_UNESCAPED_UNICODE));
         }
 
         $db = Database::getInstance()->getConnection();
