@@ -37,6 +37,9 @@ class Mailer
             $mail->SMTPAuth = !empty($user);
             if (!empty($user)) { $mail->Username = $user; $mail->Password = $pass; }
             $mail->SMTPSecure = ($port === 465) ? 'ssl' : 'tls';
+            // PHPMailer defaults to 300s, long enough for an unreachable SMTP host to
+            // hang a user-facing request until PHP's own time limit kills it.
+            $mail->Timeout = 15;
             $mail->CharSet = 'UTF-8';
             $mail->setFrom($from, $fromName);
             $mail->addAddress($to);
@@ -50,7 +53,7 @@ class Mailer
             return true;
         } catch (\Throwable $e) {
             self::log($to, $from, $subject, $body, "SMTP FAILED ($host:$port): ".$e->getMessage());
-            return true;
+            return false;
         }
     }
 
@@ -78,7 +81,7 @@ class Mailer
         }
         $sent = @mail($to, $subject, $message, $headers);
         self::log($to, $from, $subject, $body, $sent ? 'SENT via mail()' : 'mail() FAILED');
-        return true;
+        return $sent;
     }
 
     private static function log(string $to, string $from, string $subject, string $body, string $status): void

@@ -61,15 +61,18 @@ class AuditController extends Controller
         $spam = $this->spamC($url, $html, $headers);
         $all = [$seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score']];
         $ovr = round(array_sum($all) / count($all));
+        $results = ['seo'=>$seo,'security'=>$sec,'legal'=>$leg,'accessibility'=>$a11y,'performance'=>$perf,'spam'=>$spam];
+        // Built outside the DB block — the email body and the JSON response both
+        // need it even when the insert fails.
+        $recs = [];
+        foreach ([$seo,$sec,$leg,$a11y,$perf,$spam] as $cat)
+            foreach (($cat['checks']??[]) as $c)
+                if (!$c['passed']) $recs[] = ['category'=>$cat['label'],'check'=>$c['label'],'action'=>'יש לתקן: '.$c['label']];
         $rid = 0;
         try {
             $db = Database::getInstance()->getConnection();
-            $recs = [];
-            foreach ([$seo,$sec,$leg,$a11y,$perf,$spam] as $cat)
-                foreach (($cat['checks']??[]) as $c)
-                    if (!$c['passed']) $recs[] = ['category'=>$cat['label'],'check'=>$c['label'],'action'=>'יש לתקן: '.$c['label']];
             $db->prepare("INSERT INTO audit_reports (url,overall_score,seo_score,security_score,legal_score,accessibility_score,performance_score,spam_score,total_checks,passed_checks,failed_checks,full_report,recommendations,status,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'completed',?,?,NOW())")
-               ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode(['seo'=>$seo,'security'=>$sec,'legal'=>$leg,'accessibility'=>$a11y,'performance'=>$perf,'spam'=>$spam], JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
+               ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode($results, JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
             $rid = $db->lastInsertId();
         } catch (\Throwable $e) {
             Logger::error('audit: failed to save audit_reports row', ['message' => $e->getMessage()]);
@@ -90,9 +93,18 @@ class AuditController extends Controller
             Logger::error('audit: failed to capture lead', ['message' => $e->getMessage()]);
         }
 
+        // The form labels this field "אימייל לקבלת הדוח" and requires it, so send the
+        // results without waiting for the user to press the button.
+        $emailed = $this->sendReportEmail([
+            'id' => (int)$rid,
+            'url' => $url,
+            'overall_score' => $ovr,
+            'created_at' => date('Y-m-d H:i:s'),
+        ], $results, $recs, $email);
+
         $parsed = parse_url($url);
         $urlInfo = ['url' => $url, 'protocol' => $parsed['scheme'] ?? '', 'domain' => $parsed['host'] ?? '', 'tld' => substr((string)strrchr($parsed['host'] ?? '', '.'), 1) ?: '', 'has_www' => str_starts_with($parsed['host'] ?? '', 'www.'), 'path' => $parsed['path'] ?? ''];
-        die(json_encode(['success'=>true,'overall'=>$ovr,'reportId'=>$rid,'responseTime'=>$rt,'urlInfo'=>$urlInfo,'results'=>['seo'=>$seo,'security'=>$sec,'legal'=>$leg,'accessibility'=>$a11y,'performance'=>$perf,'spam'=>$spam],'recommendations'=>$recs], JSON_UNESCAPED_UNICODE));
+        die(json_encode(['success'=>true,'overall'=>$ovr,'reportId'=>$rid,'responseTime'=>$rt,'emailed'=>$emailed,'urlInfo'=>$urlInfo,'results'=>$results,'recommendations'=>$recs], JSON_UNESCAPED_UNICODE));
     }
 
     /** Send 6-digit verification code to email */
@@ -231,30 +243,103 @@ class AuditController extends Controller
             die(json_encode(['success' => false, 'error' => 'דוח לא נמצא']));
         }
         $data = json_decode($report['full_report'] ?? '{}', true) ?: [];
+        $recs = json_decode($report['recommendations'] ?? '[]', true) ?: [];
 
-        $tmpDir = STORAGE_PATH . '/tmp';
-        if (!is_dir($tmpDir)) mkdir($tmpDir, 0755, true);
-        $pdfPath = $tmpDir . '/audit_' . $report['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
-
-        try {
-            $this->generateReportPdf($report, $data, $pdfPath);
-        } catch (\Throwable $e) {
-            Logger::error('audit: report PDF generation failed', ['message' => $e->getMessage()]);
+        if (!$this->sendReportEmail($report, $data, $recs, $email)) {
             http_response_code(500);
-            die(json_encode(['success' => false, 'error' => 'יצירת הדוח נכשלה']));
-        }
-
-        $link = $this->request->getBaseUrl() . '/audit/pdf/' . $report['id'];
-        $body = "שלום,\n\nמצורף דוח הביקורת שביקשתם עבור האתר:\n{$report['url']}\n\nציון כללי: " . (int)$report['overall_score'] . "/100\n\nניתן לצפות בדוח גם כאן:\n$link\n\nבברכה,\nצוות LandingFlow";
-        try {
-            Mailer::send($email, 'הדוח שלכם מוכן — LandingFlow', $body, '', '', $pdfPath);
-        } catch (\Throwable $e) {
-            Logger::error('audit: failed to email report', ['message' => $e->getMessage()]);
-        } finally {
-            if (file_exists($pdfPath)) @unlink($pdfPath);
+            die(json_encode(['success' => false, 'error' => 'שליחת הדוח נכשלה'], JSON_UNESCAPED_UNICODE));
         }
 
         die(json_encode(['success' => true, 'message' => 'הדוח נשלח לאימייל ' . $email], JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Email the audit results: the full findings inline in the body, plus the same
+     * report as a PDF attachment. Shared by the automatic send at the end of a scan
+     * and by the "send to email" button.
+     *
+     * A failed PDF is not fatal — the body already carries every check, so the mail
+     * still goes out with the results in it.
+     */
+    private function sendReportEmail(array $report, array $data, array $recs, string $email): bool
+    {
+        $pdfPath = '';
+        try {
+            $tmpDir = STORAGE_PATH . '/tmp';
+            if (!is_dir($tmpDir)) mkdir($tmpDir, 0755, true);
+            $pdfPath = $tmpDir . '/audit_' . ((int)($report['id'] ?? 0) ?: 'new') . '_' . bin2hex(random_bytes(4)) . '.pdf';
+            $this->generateReportPdf($report, $data, $pdfPath);
+        } catch (\Throwable $e) {
+            Logger::error('audit: report PDF generation failed', ['message' => $e->getMessage()]);
+            if ($pdfPath !== '' && file_exists($pdfPath)) @unlink($pdfPath);
+            $pdfPath = '';
+        }
+
+        try {
+            return Mailer::send(
+                $email,
+                'דוח הביקורת שלכם — ' . parse_url((string)($report['url'] ?? ''), PHP_URL_HOST),
+                $this->buildReportEmailBody($report, $data, $recs, $pdfPath !== ''),
+                '',
+                '',
+                $pdfPath
+            );
+        } catch (\Throwable $e) {
+            Logger::error('audit: failed to email report', ['message' => $e->getMessage()]);
+            return false;
+        } finally {
+            if ($pdfPath !== '' && file_exists($pdfPath)) @unlink($pdfPath);
+        }
+    }
+
+    /** Plain-text rendering of every category, check and recommendation */
+    private function buildReportEmailBody(array $report, array $data, array $recs, bool $hasPdf = true): string
+    {
+        $lines = [
+            'שלום,',
+            '',
+            'להלן תוצאות בדיקת האתר שביקשתם:',
+            (string)($report['url'] ?? ''),
+            '',
+            'ציון כללי: ' . (int)($report['overall_score'] ?? 0) . '/100',
+            '',
+        ];
+
+        foreach ($data as $cat => $d) {
+            $lines[] = '── ' . ($d['label'] ?? $cat) . ' — ' . (int)($d['score'] ?? 0) . '/100';
+            foreach (($d['checks'] ?? []) as $ck) {
+                $line = '   ' . (!empty($ck['passed']) ? '✔' : '✘') . ' ' . ($ck['label'] ?? '');
+                $value = trim((string)($ck['value'] ?? ''));
+                if ($value !== '' && $value !== '-') {
+                    $line .= ': ' . $value;
+                }
+                $lines[] = $line;
+                if (empty($ck['passed']) && !empty($ck['impact'])) {
+                    $lines[] = '      ⚠ ' . $ck['impact'];
+                }
+            }
+            $lines[] = '';
+        }
+
+        if (!empty($recs)) {
+            $lines[] = 'המלצות לשיפור:';
+            foreach ($recs as $rec) {
+                $lines[] = '   • ' . ($rec['action'] ?? '');
+            }
+            $lines[] = '';
+        }
+
+        if ($hasPdf) {
+            $lines[] = 'הדוח המלא מצורף להודעה זו כקובץ PDF.';
+        }
+        if (!empty($report['id'])) {
+            $lines[] = 'לצפייה בדוח בדפדפן: ' . $this->request->getBaseUrl() . '/audit/pdf/' . (int)$report['id'];
+        }
+        $lines[] = '';
+        $lines[] = 'בברכה,';
+        $lines[] = 'צוות LandingFlow';
+
+        return implode("\n", $lines);
     }
 
     private function generateReportPdf(array $report, array $data, string $outputPath): void
