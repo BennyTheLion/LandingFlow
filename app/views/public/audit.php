@@ -51,6 +51,10 @@
 </div></section>
 <script>
 var csrfToken=document.querySelector('input[name="<?= CSRF_TOKEN_NAME ?>"]').value;
+// The audit endpoints are rate limited and answer 429 with an HTML error page, not
+// JSON — parse that as JSON and the user sees a SyntaxError instead of the reason.
+var RATE_LIMIT_MSG="שלחתם יותר מדי בקשות. נסו שוב בעוד מספר דקות.";
+function isRateLimited(r){return r.status===429}
 // Tap/click-to-toggle check-explanation tooltips (works on touch, not just hover)
 document.getElementById("de").addEventListener("click",function(e){
   var t=e.target.closest(".chk-tip");
@@ -67,12 +71,13 @@ document.getElementById("sendCodeBtn").addEventListener("click",async function()
   var btn=this;btn.disabled=true;btn.textContent="שולח...";
   try{
     var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({email:em,action:'sendCode','<?= CSRF_TOKEN_NAME ?>':csrfToken})});
+    if(isRateLimited(r)){alert(RATE_LIMIT_MSG);btn.disabled=false;btn.textContent="שלח קוד אימות";return}
     var d=await r.json();
     if(d.success){document.getElementById("codeRow").style.display="block";document.getElementById("codeMsg").textContent=d.message;btn.textContent="נשלח ✓"}else{alert(d.error);btn.disabled=false;btn.textContent="שלח קוד אימות"}
   }catch(err){alert("שגיאה בשליחת הקוד");btn.disabled=false;btn.textContent="שלח קוד אימות"}
 });
 // Scan submission
-document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});var d=await r.json();if(!d.success){alert("Error: "+d.error);document.getElementById("load").style.display="none";return}document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
+document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});if(isRateLimited(r)){alert(RATE_LIMIT_MSG);document.getElementById("load").style.display="none";return}var d=await r.json();if(!d.success){alert("Error: "+d.error);document.getElementById("load").style.display="none";return}document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
     var ui=d.urlInfo||{};document.getElementById("domainInfo").innerHTML="<div><strong>כתובת:</strong> "+ui.url+"</div><div><strong>פרוטוקול:</strong> "+(ui.protocol||"-")+"</div><div><strong>דומיין:</strong> "+ui.domain+"</div><div><strong>סיומת:</strong> ."+ui.tld+"</div><div><strong>WWW:</strong> "+(ui.has_www?"כן":"לא")+"</div><div><strong>נתיב:</strong> "+(ui.path||"/")+"</div>";
     var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){var tipHtml=ck.tip?"<span class=chk-tip tabindex=0 role=button aria-label=\"הסבר: "+ck.tip.replace(/\"/g,"&quot;")+"\" data-tip=\""+ck.tip.replace(/\"/g,"&quot;")+"\">?</span>":"";h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+tipHtml+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").href="https://wa.me/972528529448?text="+msg;var plBtn=document.getElementById("pl");plBtn.dataset.reportId=d.reportId;plBtn.dataset.email=em;plBtn.disabled=false;plBtn.textContent=d.emailed?"📧 שלח שוב למייל":"📧 שלח דוח למייל";document.getElementById("mailNote").textContent=d.emailed?"✅ הדוח נשלח לאימייל "+em+" (כולל קובץ PDF מצורף)":""}catch(err){alert("שגיאה: "+(err.message||"ודאו שהURL תקין"));document.getElementById("load").style.display="none";console.error(err)}});
 // Email the finished report to the address the user verified
@@ -82,6 +87,7 @@ document.getElementById("pl").addEventListener("click",async function(){
   var orig=btn.textContent;btn.disabled=true;btn.textContent="שולח...";
   try{
     var r=await fetch("<?= $url('audit/report') ?>",{method:"POST",body:new URLSearchParams({reportId:rid,email:em,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});
+    if(isRateLimited(r)){alert(RATE_LIMIT_MSG);btn.textContent=orig;btn.disabled=false;return}
     var d=await r.json();
     if(d.success){btn.textContent="נשלח ✓"}else{alert(d.error||"שליחת הדוח נכשלה");btn.textContent=orig;btn.disabled=false}
   }catch(err){alert("שגיאה בשליחת הדוח");btn.textContent=orig;btn.disabled=false}

@@ -38,9 +38,9 @@ class Router
         
         // Free Website Audit
         $this->get('/audit', 'AuditController@index');
-        $this->post('/audit/check', 'AuditController@check');
+        $this->post('/audit/check', 'AuditController@check', ['AuditRateLimitMiddleware']);
         $this->get('/audit/pdf/{id}', 'AuditController@pdf');
-        $this->post('/audit/report', 'AuditController@report');
+        $this->post('/audit/report', 'AuditController@report', ['AuditRateLimitMiddleware']);
 
         // Landing Page Tester Agent
         $this->get('/landing-tester', 'LandingPageTesterController@index');
@@ -105,6 +105,35 @@ class Router
         $this->get('/admin/audit-reports/{id}', 'AuditController@adminShow', ['AuthMiddleware']);
         $this->get('/admin/audit-reports/{id}/detail', 'AuditController@adminDetail', ['AuthMiddleware']);
         $this->get('/admin/audit-reports/{id}/delete', 'AuditController@adminDelete', ['AuthMiddleware']);
+
+        // Lead Engine (docs/lead-engine-spec.md §10)
+        // Prefixed /admin/lead-engine because /admin/leads is the existing CRM.
+        $this->get('/admin/lead-engine', 'LeadEngineController@dashboard', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/halt', 'LeadEngineController@toggleHalt', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/run', 'LeadEngineController@runNow', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/digest', 'LeadEngineController@sendDigest', ['AuthMiddleware']);
+        $this->get('/admin/lead-engine/runs', 'LeadEngineController@runs', ['AuthMiddleware']);
+        $this->get('/admin/lead-engine/queue', 'LeadEngineController@queue', ['AuthMiddleware']);
+        $this->get('/admin/lead-engine/settings', 'LeadEngineController@settings', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/settings', 'LeadEngineController@updateSettings', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/dnc', 'LeadEngineController@addDncEntry', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/dnc/{id}/remove', 'LeadEngineController@removeFromDnc', ['AuthMiddleware']);
+        $this->get('/admin/lead-engine/prospects', 'LeadEngineController@prospects', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects', 'LeadEngineController@storeProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/import', 'LeadEngineController@importCsv', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/source/places', 'LeadEngineController@sourcePlaces', ['AuthMiddleware']);
+        $this->get('/admin/lead-engine/prospects/{id}', 'LeadEngineController@showProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}', 'LeadEngineController@updateProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}/audit', 'LeadEngineController@auditProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}/reprocess', 'LeadEngineController@reprocessProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}/replied', 'LeadEngineController@markReplied', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}/dnc', 'LeadEngineController@addToDnc', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/drafts/{id}', 'LeadEngineController@updateDraft', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/drafts/{id}/approve', 'LeadEngineController@approveDraft', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/drafts/{id}/reject', 'LeadEngineController@rejectDraft', ['AuthMiddleware']);
+        // GET = preview only, never sends. POST = the actual send. See spec §9.
+        $this->get('/admin/lead-engine/drafts/{id}/confirm', 'LeadEngineController@confirmDraft', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/drafts/{id}/send', 'LeadEngineController@sendDraft', ['AuthMiddleware']);
 
         // Receipts
         $this->get('/admin/receipts', 'ReceiptController@index', ['AuthMiddleware']);
