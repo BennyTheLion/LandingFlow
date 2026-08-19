@@ -40,6 +40,7 @@ class Router
         $this->get('/audit', 'AuditController@index');
         $this->post('/audit/check', 'AuditController@check', ['AuditRateLimitMiddleware']);
         $this->get('/audit/pdf/{id}', 'AuditController@pdf');
+        $this->get('/audit/download/{id}', 'AuditController@download');
         $this->post('/audit/report', 'AuditController@report', ['AuditRateLimitMiddleware']);
 
         // Landing Page Tester Agent

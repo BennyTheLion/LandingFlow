@@ -220,6 +220,48 @@ class AuditController extends Controller
         return ob_get_clean();
     }
 
+    /**
+     * Stream the report as a downloadable PDF — the same document the email
+     * attaches, so the two can never disagree.
+     *
+     * /audit/pdf/{id} stays as the printable HTML view; this is the file download.
+     */
+    public function download(string $id): void
+    {
+        $db = Database::getInstance()->getConnection();
+        $r = $db->prepare("SELECT * FROM audit_reports WHERE id = ?");
+        $r->execute([(int)$id]);
+        $report = $r->fetch(\PDO::FETCH_ASSOC);
+        if (!$report) throw new \App\Core\Exceptions\NotFoundException();
+        $data = json_decode($report['full_report'] ?? '{}', true) ?: [];
+
+        $tmpDir = STORAGE_PATH . '/tmp';
+        if (!is_dir($tmpDir)) mkdir($tmpDir, 0755, true);
+        $pdfPath = $tmpDir . '/audit_dl_' . (int)$report['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
+
+        try {
+            $this->generateReportPdf($report, $data, $pdfPath);
+        } catch (\Throwable $e) {
+            Logger::error('audit: download PDF generation failed', ['message' => $e->getMessage()]);
+            if (file_exists($pdfPath)) @unlink($pdfPath);
+            // Better the printable view than a dead end
+            $this->redirect('audit/pdf/' . (int)$report['id']);
+            return;
+        }
+
+        $host = preg_replace('/[^A-Za-z0-9.-]/', '', (string)parse_url((string)$report['url'], PHP_URL_HOST)) ?: 'report';
+        $date = date('Y-m-d', strtotime((string)$report['created_at']) ?: time());
+        $filename = "landingflow-audit-{$host}-{$date}.pdf";
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . filesize($pdfPath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        readfile($pdfPath);
+        @unlink($pdfPath);
+        exit;
+    }
+
     /** Generate the report as a PDF and email it to the address the user entered */
     public function report(): void
     {
