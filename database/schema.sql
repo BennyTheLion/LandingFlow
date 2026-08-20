@@ -124,7 +124,7 @@ CREATE TABLE `audit_reports` (
     `full_report` JSON NULL COMMENT 'Complete audit results as JSON',
     `recommendations` JSON NULL COMMENT 'Array of recommendations',
     `status` ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
-    `share_token` CHAR(64) NULL COMMENT 'Random token authorizing report links; NULL = session-only access',
+    `share_token` CHAR(64) NULL COMMENT 'Random token authorizing report links, NULL means session-only access',
     `ip_address` VARCHAR(45) NULL,
     `user_agent` VARCHAR(500) NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

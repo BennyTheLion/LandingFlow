@@ -8,7 +8,7 @@
 
 ALTER TABLE `audit_reports`
     ADD COLUMN `share_token` CHAR(64) NULL
-        COMMENT 'Random token authorizing report links; NULL = session-only access'
+        COMMENT 'Random token authorizing report links, NULL means session-only access'
         AFTER `status`,
     ADD UNIQUE INDEX `idx_audit_share_token` (`share_token`);
 
