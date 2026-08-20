@@ -32,7 +32,7 @@ class OutreachRepository
                     p.business_name, p.domain, p.url, p.city, p.niche,
                     p.contact_name, p.contact_role, p.email AS prospect_email,
                     p.phone AS prospect_phone, p.spends_on_ads, p.hot_score,
-                    p.status AS prospect_status,
+                    p.status AS prospect_status, p.primary_issue,
                     a.perf_mobile, a.a11y_score, a.seo_score, a.has_analytics,
                     a.has_meta_pixel, a.has_click_to_call, a.has_ssl,
                     a.has_accessibility_statement, a.perf_source
