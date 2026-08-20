@@ -143,12 +143,17 @@
 <div class="table-wrap"><table class="tbl">
 <thead><tr>
   <th>עסק</th><th>דומיין</th><th>ניקוד</th><th>הבעיה</th><th>איש קשר</th>
-  <th>מייל</th><th>נישה</th><th>עיר</th><th>מקור</th><th>סטטוס</th><th>בדיקה</th>
+  <th>מייל</th><th>נישה</th><th>עיר</th><th>מקור</th><th>סטטוס</th><th>בדיקה</th><th>שלח דוח</th>
 </tr></thead>
 <tbody>
 <?php
 $issueLabels = ['broken_form'=>'טופס לא עובד','no_analytics_with_ads'=>'מפרסם בלי מעקב','slow_mobile'=>'איטי במובייל','no_accessibility'=>'אין נגישות','no_click_to_call'=>'אין חיוג','weak_seo'=>'SEO חלש','none'=>'—'];
 $sourceLabels = ['google_places'=>'Places','meta_ads'=>'מודעות','manual'=>'ידני','csv'=>'CSV','referral'=>'הפניה'];
+// Defaults to your own address, never the prospect's — sending a report to the
+// business itself is outreach and belongs in the draft approval flow.
+$reportTo = (defined('ADMIN_NOTIFY_EMAIL') && ADMIN_NOTIFY_EMAIL !== '')
+    ? ADMIN_NOTIFY_EMAIL
+    : (defined('ALERT_EMAIL') && ALERT_EMAIL !== '' ? ALERT_EMAIL : (defined('SMTP_USER') ? SMTP_USER : ''));
 foreach ($prospects as $p):
   $score = $p['hot_score'] !== null ? (int) $p['hot_score'] : null;
   $sc = $score === null ? 's-cool' : ($score >= 75 ? 's-hot' : ($score >= 55 ? 's-warm' : 's-cool'));
@@ -168,10 +173,19 @@ foreach ($prospects as $p):
   <td style="font-size:.75rem"><?= htmlspecialchars((string) ($sourceLabels[$p['source']] ?? $p['source'])) ?></td>
   <td><span class="badge b-<?= htmlspecialchars((string) $p['status']) ?>"><?= htmlspecialchars((string) $p['status']) ?></span></td>
   <td style="font-size:.73rem;color:var(--ink-soft)"><?= $p['last_audit_at'] ? date('d/m', strtotime((string) $p['last_audit_at'])) : 'טרם' ?></td>
+  <td>
+    <form method="POST" action="<?= $url('admin/lead-engine/prospects/' . (int) $p['id'] . '/email-report') ?>" style="display:flex;gap:4px;align-items:center">
+      <?= $csrf() ?>
+      <input type="email" name="email" value="<?= htmlspecialchars((string) $reportTo) ?>" required dir="ltr"
+             style="width:145px;font-size:.72rem;padding:3px 5px" title="לאיזו כתובת לשלוח את הדוח">
+      <button type="submit" class="btn btn-ghost" style="padding:3px 8px"
+              title="הרץ בדיקה מלאה ושלח את הדוח (PDF) לכתובת שבשדה">📧</button>
+    </form>
+  </td>
 </tr>
 <?php endforeach; ?>
 <?php if (empty($prospects)): ?>
-  <tr><td colspan="11" class="empty">אין לידים שתואמים לסינון.</td></tr>
+  <tr><td colspan="12" class="empty">אין לידים שתואמים לסינון.</td></tr>
 <?php endif; ?>
 </tbody></table></div>
 </div>

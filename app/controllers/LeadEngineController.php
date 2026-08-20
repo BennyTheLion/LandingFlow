@@ -18,6 +18,7 @@ use App\Repositories\ProspectRepository;
 use App\Services\LeadEngineDigest;
 use App\Services\LeadEnginePipeline;
 use App\Services\OutreachSender;
+use App\Services\SiteAuditReport;
 
 /**
  * LeadEngineController — the admin panel from spec §10.
@@ -283,6 +284,70 @@ class LeadEngineController extends Controller
     }
 
     /** Audit only, keeping the prospect where it is in the funnel */
+    /**
+     * Run the site audit for a prospect and email the report to a typed address.
+     *
+     * Internal tool: this is the same report /audit produces, sent to whoever the
+     * admin types — for reviewing a lead before deciding whether to approach them.
+     * It is not outreach, so it deliberately skips SendGuard and the opt-out footer;
+     * anything going to the prospect goes through the draft approval flow instead.
+     */
+    public function emailProspectReport(string $id): never
+    {
+        $prospectId = (int) $id;
+        $this->requireCsrf('admin/lead-engine/prospects');
+
+        $prospect = $this->prospects->findById($prospectId);
+        if ($prospect === null) {
+            Session::flash('error', 'הליד לא נמצא.');
+            $this->redirect('admin/lead-engine/prospects');
+        }
+
+        $email = trim((string) $this->request->input('email', ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Session::flash('error', 'נא להזין כתובת אימייל תקינה לשליחת הדוח.');
+            $this->redirect('admin/lead-engine/prospects');
+        }
+
+        try {
+            $reporter = new SiteAuditReport();
+            $audit = $reporter->run((string) $prospect['url']);
+
+            if (!$audit['reachable']) {
+                Session::flash('error', 'לא ניתן לטעון את האתר ' . $prospect['url'] . ' — הדוח לא נשלח.');
+                $this->redirect('admin/lead-engine/prospects');
+            }
+
+            // No id and no share_token: this report is not persisted to
+            // audit_reports, so there is no link to include — only the PDF.
+            $sent = $reporter->sendReportEmail(
+                [
+                    'id' => 0,
+                    'url' => $prospect['url'],
+                    'overall_score' => $audit['overall'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                ],
+                $audit['results'],
+                $audit['recommendations'],
+                $email
+            );
+
+            Session::flash(
+                $sent ? 'success' : 'error',
+                $sent
+                    ? 'הדוח (' . $audit['overall'] . '/100) נשלח ל-' . $email
+                    : 'יצירת הדוח הצליחה אך השליחה ל-' . $email . ' נכשלה — בדקו את הגדרות ה-SMTP.'
+            );
+        } catch (\Throwable $e) {
+            Logger::error('leadengine: prospect report email failed', [
+                'prospect_id' => $prospectId, 'message' => $e->getMessage(),
+            ]);
+            Session::flash('error', 'שליחת הדוח נכשלה: ' . $e->getMessage());
+        }
+
+        $this->redirect('admin/lead-engine/prospects');
+    }
+
     public function auditProspect(string $id): never
     {
         $prospectId = (int) $id;

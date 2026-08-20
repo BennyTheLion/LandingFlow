@@ -126,6 +126,7 @@ class Router
         $this->get('/admin/lead-engine/prospects/{id}', 'LeadEngineController@showProspect', ['AuthMiddleware']);
         $this->post('/admin/lead-engine/prospects/{id}', 'LeadEngineController@updateProspect', ['AuthMiddleware']);
         $this->post('/admin/lead-engine/prospects/{id}/audit', 'LeadEngineController@auditProspect', ['AuthMiddleware']);
+        $this->post('/admin/lead-engine/prospects/{id}/email-report', 'LeadEngineController@emailProspectReport', ['AuthMiddleware']);
         $this->post('/admin/lead-engine/prospects/{id}/reprocess', 'LeadEngineController@reprocessProspect', ['AuthMiddleware']);
         $this->post('/admin/lead-engine/prospects/{id}/replied', 'LeadEngineController@markReplied', ['AuthMiddleware']);
         $this->post('/admin/lead-engine/prospects/{id}/dnc', 'LeadEngineController@addToDnc', ['AuthMiddleware']);
