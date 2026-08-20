@@ -41,6 +41,16 @@
 .b-blocked{background:rgba(245,158,11,.14);color:#92400e}
 .b-do_not_contact{background:rgba(220,38,38,.12);color:var(--danger)}
 .empty{text-align:center;padding:40px;color:var(--ink-faint)}
+.status-help{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.status-help summary{cursor:pointer;padding:12px 16px;font-size:.85rem;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px}
+.status-help summary::-webkit-details-marker{display:none}
+.status-help summary::before{content:'▸';color:var(--ink-faint);transition:transform .15s}
+.status-help[open] summary::before{transform:rotate(90deg)}
+.status-help-body{padding:0 16px 16px;font-size:.8rem;line-height:1.7;color:var(--ink-soft)}
+.status-help-body dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.status-help-body dt{white-space:nowrap}
+.status-help-body dd{margin:0;color:var(--ink-faint)}
+.status-help-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);color:var(--ink-faint)}
 </style>
 
 <div class="le-page">
@@ -57,6 +67,49 @@
 <?php if (!empty($flashMsg)): ?>
   <div class="flash <?= htmlspecialchars($flashMsg['type']) ?>"><?= htmlspecialchars($flashMsg['message']) ?></div>
 <?php endif; ?>
+
+<details class="status-help">
+  <summary>❓ מה המשמעות של כל סטטוס?</summary>
+  <div class="status-help-body">
+    <dl>
+      <dt><span class="badge b-new">חדש</span></dt>
+      <dd>נוסף למערכת (ידני / CSV / Google Places) — עדיין לא נבדק.</dd>
+
+      <dt><span class="badge b-audited">נבדק</span></dt>
+      <dd>הבדיקה רצה וה-hot score עבר את הסף — ממתין לאיתור איש קשר.</dd>
+
+      <dt><span class="badge b-enriched">הועשר</span></dt>
+      <dd>נמצא איש קשר (טלפון / מייל / שם) — ממתין לכתיבת טיוטה.</dd>
+
+      <dt><span class="badge b-drafted">טיוטה</span></dt>
+      <dd>נכתבו הודעה ותסריט סרטון — ממתינים בתור האישורים.</dd>
+
+      <dt><span class="badge b-approved">אושר</span></dt>
+      <dd>אושר בעמוד האישור, אך טרם נשלח בפועל.</dd>
+
+      <dt><span class="badge b-sent">נשלח</span></dt>
+      <dd>ההודעה נשלחה בפועל ללקוח.</dd>
+
+      <dt><span class="badge b-replied">הגיב</span></dt>
+      <dd>הליד הגיב — קודם אוטומטית ל-CRM כלקוח פוטנציאלי, והפולואפים הבאים בוטלו.</dd>
+
+      <dt><span class="badge b-blocked">חסם בדיקה</span></dt>
+      <dd>האתר חסם את הבדיקה (קוד 401/403/429/503, או robots.txt) — לא ידוע אם זה ליד טוב, פשוט לא הצלחנו להסתכל. נבדק שוב אוטומטית כעבור 3 ימים.</dd>
+
+      <dt><span class="badge b-closed">נסגר</span></dt>
+      <dd>הניקוד מתחת לסף הכניסה, או שהאתר לא נגיש כלל (לא בגלל חסימת בוטים) — לא שווה מרדף כרגע. נבדק שוב אוטומטית כעבור 60 יום, כדי לתפוס שיפור או הרעה עתידית.</dd>
+
+      <dt><span class="badge b-rejected">נדחה</span></dt>
+      <dd>אדם דחה את הטיוטה באופן ידני — החלטה שיקולית, לא תוצאה של בדיקה.</dd>
+
+      <dt><span class="badge b-do_not_contact">ברשימה שחורה</span></dt>
+      <dd>הדומיין / מייל / טלפון ברשימת do-not-contact — חסום לצמיתות. נבדק לפני כל הוספה ולפני כל שליחה, בלי יוצא מן הכלל.</dd>
+    </dl>
+    <div class="status-help-note">
+      💡 ליד שהגיע ל"נשלח" לא יחזור אחורה בבדיקה חוזרת — גם אם הניקוד יורד בבדיקה הבאה, הסטטוס נשאר "נשלח" (כדי לא לאבד את ההיסטוריה של פנייה שכבר יצאה), והציון המעודכן פשוט מוצג לצד הליד כהזדמנות לפולואפ.
+    </div>
+  </div>
+</details>
 
 <div class="tools">
   <div class="tool">
