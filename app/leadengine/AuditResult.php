@@ -15,6 +15,9 @@ class AuditResult
     public int $httpStatus = 0;
     public int $responseTimeMs = 0;
 
+    /** True when the failed fetch looks like bot/CDN protection rather than a dead site */
+    public bool $looksBlocked = false;
+
     public ?int $perfMobile = null;
     public ?int $perfDesktop = null;
     public int $seoScore = 0;
@@ -70,6 +73,7 @@ class AuditResult
         return [
             'url'              => $this->url,
             'fetch_ok'         => $this->fetchOk,
+            'looks_blocked'    => $this->looksBlocked,
             'http_status'      => $this->httpStatus,
             'response_time_ms' => $this->responseTimeMs,
             'perf_mobile'      => $this->perfMobile,

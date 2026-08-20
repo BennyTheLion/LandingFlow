@@ -38,6 +38,7 @@
 .b-approved,.b-sent{background:rgba(22,163,74,.14);color:var(--success)}
 .b-replied{background:var(--success);color:#fff}
 .b-closed,.b-rejected{background:rgba(107,114,128,.1);color:var(--ink-faint)}
+.b-blocked{background:rgba(245,158,11,.14);color:#92400e}
 .b-do_not_contact{background:rgba(220,38,38,.12);color:var(--danger)}
 .empty{text-align:center;padding:40px;color:var(--ink-faint)}
 </style>
@@ -118,7 +119,7 @@
   <input type="search" name="q" placeholder="חיפוש: שם, דומיין, איש קשר, מייל" value="<?= htmlspecialchars((string) $filters['search']) ?>">
   <select name="status">
     <option value="">כל הסטטוסים</option>
-    <?php foreach (['new'=>'חדש','audited'=>'נבדק','enriched'=>'הועשר','drafted'=>'טיוטה','approved'=>'אושר','sent'=>'נשלח','replied'=>'הגיב','closed'=>'נסגר','rejected'=>'נדחה','do_not_contact'=>'חסום'] as $k=>$v): ?>
+    <?php foreach (['new'=>'חדש','audited'=>'נבדק','enriched'=>'הועשר','drafted'=>'טיוטה','approved'=>'אושר','sent'=>'נשלח','replied'=>'הגיב','blocked'=>'חסם בדיקה','closed'=>'נסגר','rejected'=>'נדחה','do_not_contact'=>'ברשימה שחורה'] as $k=>$v): ?>
       <option value="<?= $k ?>" <?= $filters['status'] === $k ? 'selected' : '' ?>><?= $v ?></option>
     <?php endforeach; ?>
   </select>

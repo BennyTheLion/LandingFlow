@@ -86,9 +86,18 @@ class AuditEngine
                 }
             }
             if (!$result->fetchOk) {
+                // Distinguish "we chose not to fetch / were bounced by bot protection"
+                // from a genuinely dead site: robots.txt disallow, or a status code
+                // WAFs/CDNs commonly use to reject automated clients. A site behind
+                // Cloudflare/Hostinger-style protection is not a bad lead — we just
+                // couldn't see it, and that is a human-review case, not a close.
+                $result->looksBlocked = $page['blocked']
+                    || in_array($page['status'], [401, 403, 429, 503], true);
                 $result->issues[] = $page['blocked']
                     ? 'robots.txt חוסם סריקה של דף הבית'
-                    : 'לא ניתן לטעון את דף הבית (HTTP ' . $page['status'] . ')';
+                    : ($result->looksBlocked
+                        ? 'האתר חסם את הסריקה (HTTP ' . $page['status'] . ') — כנראה הגנת בוטים'
+                        : 'לא ניתן לטעון את דף הבית (HTTP ' . $page['status'] . ')');
                 $result->hotScore = 0;
                 $result->primaryIssue = 'none';
                 return $result;

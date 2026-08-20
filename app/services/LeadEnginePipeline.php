@@ -86,6 +86,7 @@ class LeadEnginePipeline
                 $this->stageSourcing($perStageLimit);
             }
             $this->stageAudit($perStageLimit);
+            $this->stageReaudit($perStageLimit);
             $this->stageContactDiscovery($perStageLimit);
             $this->stageDraft($perStageLimit);
             $this->stageHousekeeping();
@@ -244,6 +245,38 @@ class LeadEnginePipeline
     }
 
     /**
+     * Periodic re-audit of prospects that already went through scoring once.
+     * 'blocked' (likely transient bot/CDN protection) gets a short retry window;
+     * 'closed'/'sent' get the long one — a score drop on an already-contacted
+     * business is a good excuse for a follow-up (spec §10).
+     */
+    public function stageReaudit(int $limit = 25): int
+    {
+        $due = $this->prospects->dueForReaudit(['blocked'], LeadEngineConfig::int('reaudit_blocked_days'), $limit);
+        $remaining = $limit - count($due);
+        if ($remaining > 0) {
+            $due = array_merge($due, $this->prospects->dueForReaudit(
+                ['closed', 'sent'], LeadEngineConfig::int('reaudit_closed_days'), $remaining
+            ));
+        }
+
+        $done = 0;
+        foreach ($due as $prospect) {
+            try {
+                $this->auditProspect($prospect);
+                $done++;
+            } catch (\Throwable $e) {
+                $this->counters['errors']++;
+                $this->log[] = ['stage' => 'reaudit', 'prospect_id' => (int) $prospect['id'], 'error' => $e->getMessage()];
+                Logger::error('leadengine: reaudit stage failed', [
+                    'prospect_id' => $prospect['id'], 'message' => $e->getMessage(),
+                ]);
+            }
+        }
+        return $done;
+    }
+
+    /**
      * Audit one prospect and apply the entry threshold.
      *
      * Below the threshold the prospect is closed, not deleted — the audit row
@@ -266,12 +299,19 @@ class LeadEnginePipeline
         $threshold = LeadEngineConfig::int('hot_score_threshold');
 
         if (!$audit->fetchOk) {
-            $this->prospects->setStatus($prospectId, 'closed');
+            // A blocked fetch (robots.txt disallow, or a bot-protection status code
+            // like 401/403/429/503) means the site is unseen, not necessarily bad —
+            // route it to 'blocked' for manual review instead of closing it like a
+            // real dead-end. Only a genuine connection failure closes outright.
+            $status = $audit->looksBlocked ? 'blocked' : 'closed';
+            $this->prospects->setStatus($prospectId, $status);
             $this->log[] = [
                 'stage' => 'audit', 'prospect_id' => $prospectId, 'domain' => $prospect['domain'],
-                'closed' => 'homepage unreachable', 'http_status' => $audit->httpStatus,
+                'outcome' => $status,
+                'reason' => $audit->looksBlocked ? 'bot protection likely' : 'homepage unreachable',
+                'http_status' => $audit->httpStatus,
             ];
-            return ['audit_id' => $auditId, 'hot_score' => 0, 'passed' => false];
+            return ['audit_id' => $auditId, 'hot_score' => 0, 'passed' => false, 'status' => $status];
         }
 
         if ($audit->hotScore < $threshold) {

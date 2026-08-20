@@ -32,6 +32,8 @@ class LeadEngineConfig
         'active_niches'             => 'dental_clinic,law_firm,aesthetics,contractor',
         'active_cities'             => '',
         'closed_retention_months'   => 12,
+        'reaudit_closed_days'       => 60,
+        'reaudit_blocked_days'      => 3,
     ];
 
     /** Setting key => env constant name */

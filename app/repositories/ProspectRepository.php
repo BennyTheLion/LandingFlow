@@ -234,18 +234,26 @@ class ProspectRepository
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
-    /** Prospects due for a periodic re-audit */
-    public function dueForReaudit(int $days = 60, int $limit = 25): array
+    /**
+     * Prospects due for a periodic re-audit. Statuses share one cutoff here
+     * because callers pass a window sized for that group — 'blocked' (likely
+     * transient bot protection) wants a much shorter window than 'closed'/'sent'.
+     */
+    public function dueForReaudit(array $statuses, int $days, int $limit = 25): array
     {
+        if ($statuses === []) {
+            return [];
+        }
         $cutoff = gmdate('Y-m-d H:i:s', time() - $days * 86400);
+        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
         $stmt = $this->pdo->prepare(
             "SELECT * FROM prospects
-             WHERE status IN ('closed', 'sent')
+             WHERE status IN ($placeholders)
                AND last_audit_at IS NOT NULL
                AND last_audit_at <= ?
              ORDER BY last_audit_at ASC LIMIT " . (int) $limit
         );
-        $stmt->execute([$cutoff]);
+        $stmt->execute([...$statuses, $cutoff]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

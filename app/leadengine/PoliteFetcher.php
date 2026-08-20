@@ -59,6 +59,7 @@ class PoliteFetcher
             CURLOPT_ENCODING       => '',
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
         ]);
         $raw = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -145,6 +146,7 @@ class PoliteFetcher
             CURLOPT_TIMEOUT        => 8,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_USERAGENT      => LeadEngineConfig::USER_AGENT,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
         ]);
         $body = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);

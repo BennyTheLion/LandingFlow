@@ -73,8 +73,8 @@
 <?php
 $statusLabels = [
   'new' => 'חדשים', 'audited' => 'נבדקו', 'enriched' => 'הועשרו', 'drafted' => 'טיוטה',
-  'approved' => 'אושרו', 'sent' => 'נשלחו', 'replied' => 'הגיבו', 'closed' => 'נסגרו',
-  'rejected' => 'נדחו', 'do_not_contact' => 'חסומים',
+  'approved' => 'אושרו', 'sent' => 'נשלחו', 'replied' => 'הגיבו', 'blocked' => 'חסמו בדיקה',
+  'closed' => 'נסגרו', 'rejected' => 'נדחו', 'do_not_contact' => 'ברשימה שחורה',
 ];
 $totalProspects = array_sum($prospectCounts);
 $sentCount = $prospectCounts['sent'] ?? 0;
