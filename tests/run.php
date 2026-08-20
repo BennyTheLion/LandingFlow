@@ -20,6 +20,7 @@ $testFiles = [
     'Scanner/AccessibilityScannerTest.php' => 'AccessibilityScannerTest',
     'Scanner/SpamScannerTest.php' => 'SpamScannerTest',
     'Ai/AiLayerTest.php' => 'AiLayerTest',
+    'LeadEngine/LeadEngineTest.php' => 'LeadEngineTest',
     'Integration/IntegrationTest.php' => 'IntegrationTest',
     'Api/ApiLayerTest.php' => 'ApiLayerTest',
 ];

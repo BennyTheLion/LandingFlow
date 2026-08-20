@@ -53,3 +53,41 @@ define('AI_API_KEY', '');
 define('AI_API_URL', 'https://api.openai.com/v1/chat/completions');
 define('AI_MODEL', 'gpt-4o-mini');
 define('AI_MAX_TOKENS', 4096);
+
+// ---------------------------------------------------------------------------
+// Lead Engine (docs/lead-engine-spec.md)
+//
+// The engine degrades gracefully: with no keys at all you still get manual and
+// CSV entry, heuristic scoring, template drafts, and the full approval flow.
+// APPROVAL_TOKEN_SECRET is the one hard requirement for the approval flow.
+// ---------------------------------------------------------------------------
+
+// Stage 1 sourcing — leave empty to disable automatic Google Places sourcing
+define('GOOGLE_PLACES_API_KEY', '');
+
+// Stage 2 scoring — without a key, perf_mobile is a local heuristic, and the
+// panel labels it as such so it is never quoted as a PageSpeed number
+define('PAGESPEED_API_KEY', '');
+
+// Stage 5 approval tokens — REQUIRED. Generate with:
+//   php -r "echo bin2hex(random_bytes(32));"
+// Must be at least 32 characters; the engine refuses to issue tokens otherwise.
+define('APPROVAL_TOKEN_SECRET', '');
+
+// Where the daily approval digest is sent (falls back to ALERT_EMAIL)
+define('ADMIN_NOTIFY_EMAIL', '');
+
+// From address on outbound prospect email (falls back to SMTP_FROM)
+define('EMAIL_FROM', 'noreply@landingflow.co.il');
+
+// Identified sender + opt-out, appended to every outbound message (spec §11.2)
+define('OUTREACH_SENDER_IDENTITY', 'LandingFlow — landingflow.co.il');
+define('OUTREACH_UNSUBSCRIBE_URL', '');
+
+// Send guardrails (spec §9). The admin panel can override these at runtime;
+// these are the deployment baseline.
+define('MAX_DAILY_SENDS', 8);
+define('SEND_WINDOW_START', '09:00');
+define('SEND_WINDOW_END', '18:00');
+define('HOT_SCORE_THRESHOLD', 55);
+define('PIPELINE_ENABLED', true);

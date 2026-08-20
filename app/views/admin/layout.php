@@ -46,8 +46,19 @@ body.high-contrast{filter:contrast(1.4) grayscale(.3)}body.large-text{font-size:
 <aside class="sidebar" id="sidebar">
   <a href="<?= $url('') ?>" class="logo"><span class="logo-mark">LF</span>LandingFlow</a>
   <nav class="side-nav">
-    <a href="<?= $url('admin') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/monitoring') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/leads') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/projects') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/hosting') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/audit-reports') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/receipts') ? '' : (str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/dashboard') ? '' : 'active')))))) ?>">📊 דשבורד</a>
+    <?php
+    // The dashboard link is active only when no other section owns the URL.
+    $adminUri = $_SERVER['REQUEST_URI'] ?? '';
+    $adminSections = ['/admin/monitoring', '/admin/leads', '/admin/lead-engine', '/admin/projects',
+                      '/admin/hosting', '/admin/audit-reports', '/admin/receipts', '/admin/dashboard'];
+    $inSection = false;
+    foreach ($adminSections as $adminSection) {
+        if (str_contains($adminUri, $adminSection)) { $inSection = true; break; }
+    }
+    ?>
+    <a href="<?= $url('admin') ?>" class="<?= $inSection ? '' : 'active' ?>">📊 דשבורד</a>
     <a href="<?= $url('admin/leads') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/leads') ? 'active' : '' ?>">📇 לידים</a>
+    <a href="<?= $url('admin/lead-engine') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/lead-engine') ? 'active' : '' ?>">🎯 מנוע לידים</a>
     <a href="<?= $url('admin/projects') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/projects') ? 'active' : '' ?>">📁 פרויקטים</a>
     <a href="<?= $url('admin/hosting') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/hosting') ? 'active' : '' ?>">☁️ אחסון</a>
     <a href="<?= $url('admin/monitoring') ?>" class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/monitoring') ? 'active' : '' ?>">📡 ניטור</a>

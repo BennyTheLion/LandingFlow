@@ -39,6 +39,21 @@ define('RATE_LIMIT_WINDOW', 60);
 // Test-specific: use temp session directory
 define('LOG_PATH', STORAGE_PATH . '/logs/');
 
+// Lead Engine: a fixed 64-char secret so approval-token tests are deterministic.
+// No live API keys — the engine's fallback paths are what we exercise here.
+define('APPROVAL_TOKEN_SECRET', str_repeat('t3st-secret-', 5) . 'abcd');
+define('GOOGLE_PLACES_API_KEY', '');
+define('PAGESPEED_API_KEY', '');
+define('ADMIN_NOTIFY_EMAIL', 'test@example.com');
+define('EMAIL_FROM', 'noreply@example.com');
+define('OUTREACH_SENDER_IDENTITY', 'LandingFlow Test');
+define('OUTREACH_UNSUBSCRIBE_URL', 'https://example.com/data-deletion');
+define('MAX_DAILY_SENDS', 8);
+define('SEND_WINDOW_START', '09:00');
+define('SEND_WINDOW_END', '18:00');
+define('HOT_SCORE_THRESHOLD', 55);
+define('PIPELINE_ENABLED', true);
+
 // Load autoloader
 require_once APP_PATH . '/core/Autoloader.php';
 \App\Core\Autoloader::register();
@@ -157,6 +172,121 @@ $db->exec("CREATE TABLE IF NOT EXISTS lead_notes (
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )");
 
+    // --- Lead Engine tables (database/migrations/2026_08_19_lead_engine.sql) ---
+    $db->exec("CREATE TABLE IF NOT EXISTS prospects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        business_name TEXT NOT NULL,
+        domain TEXT NOT NULL UNIQUE,
+        url TEXT NOT NULL,
+        niche TEXT,
+        city TEXT,
+        source TEXT DEFAULT 'manual',
+        source_ref TEXT,
+        phone TEXT,
+        email TEXT,
+        contact_name TEXT,
+        contact_role TEXT,
+        spends_on_ads INTEGER DEFAULT 0,
+        broken_form INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'new',
+        hot_score INTEGER,
+        primary_issue TEXT,
+        last_audit_at TEXT,
+        crm_lead_id INTEGER,
+        notes TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (crm_lead_id) REFERENCES leads(id) ON DELETE SET NULL
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS prospect_audits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        prospect_id INTEGER NOT NULL,
+        run_at TEXT DEFAULT (datetime('now')),
+        perf_mobile INTEGER,
+        perf_desktop INTEGER,
+        seo_score INTEGER,
+        a11y_score INTEGER,
+        security_score INTEGER,
+        has_ssl INTEGER DEFAULT 0,
+        has_accessibility_statement INTEGER DEFAULT 0,
+        has_analytics INTEGER DEFAULT 0,
+        has_meta_pixel INTEGER DEFAULT 0,
+        has_click_to_call INTEGER DEFAULT 0,
+        mobile_viewport_ok INTEGER DEFAULT 0,
+        contact_form_found INTEGER DEFAULT 0,
+        hot_score INTEGER,
+        primary_issue TEXT,
+        perf_source TEXT DEFAULT 'heuristic',
+        fetch_ok INTEGER DEFAULT 1,
+        raw_json TEXT,
+        FOREIGN KEY (prospect_id) REFERENCES prospects(id) ON DELETE CASCADE
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS outreach_drafts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        prospect_id INTEGER NOT NULL,
+        audit_id INTEGER,
+        channel TEXT DEFAULT 'email',
+        subject TEXT,
+        body TEXT,
+        video_brief TEXT,
+        video_url TEXT,
+        status TEXT DEFAULT 'draft',
+        approval_token TEXT,
+        token_expires_at TEXT,
+        token_used_at TEXT,
+        followup_of INTEGER,
+        followup_step INTEGER DEFAULT 0,
+        generated_by TEXT DEFAULT 'template',
+        rejected_reason TEXT,
+        approved_at TEXT,
+        sent_at TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (prospect_id) REFERENCES prospects(id) ON DELETE CASCADE
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS outreach_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        draft_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        at TEXT DEFAULT (datetime('now')),
+        meta_json TEXT,
+        FOREIGN KEY (draft_id) REFERENCES outreach_drafts(id) ON DELETE CASCADE
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS do_not_contact (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        domain TEXT,
+        email TEXT,
+        phone TEXT,
+        reason TEXT,
+        added_at TEXT DEFAULT (datetime('now'))
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS lead_engine_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        \"trigger\" TEXT DEFAULT 'manual',
+        started_at TEXT DEFAULT (datetime('now')),
+        finished_at TEXT,
+        sourced INTEGER DEFAULT 0,
+        skipped_duplicate INTEGER DEFAULT 0,
+        skipped_dnc INTEGER DEFAULT 0,
+        audited INTEGER DEFAULT 0,
+        below_threshold INTEGER DEFAULT 0,
+        enriched INTEGER DEFAULT 0,
+        drafted INTEGER DEFAULT 0,
+        errors INTEGER DEFAULT 0,
+        log_json TEXT
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS lead_engine_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TEXT DEFAULT (datetime('now'))
+    )");
+
 // Seed roles
     $db->exec("INSERT OR IGNORE INTO roles (id, name, slug) VALUES (1, 'admin', 'admin')");
     $db->exec("INSERT OR IGNORE INTO roles (id, name, slug) VALUES (2, 'staff', 'staff')");
@@ -176,6 +306,11 @@ function resetDatabase(): void
 {
     $db = new PDO(DB_DSN);
     $db->exec('DELETE FROM password_resets');
+    // Lead Engine tables first — prospects.crm_lead_id references leads
+    foreach (['outreach_events', 'outreach_drafts', 'prospect_audits', 'prospects',
+              'do_not_contact', 'lead_engine_runs', 'lead_engine_settings'] as $table) {
+        $db->exec("DELETE FROM $table");
+    }
     $db->exec('DELETE FROM leads');
     $db->exec('DELETE FROM users');
     $db->exec("INSERT OR IGNORE INTO roles (id, name, slug) VALUES (1, 'admin', 'admin')");

@@ -40,6 +40,39 @@ class OpenAiService
         return $this->parseResponse($response);
     }
 
+    /**
+     * Generic single-turn completion — used by the Lead Engine for contact-name
+     * extraction and outreach drafts. Returns null when the API is unavailable
+     * or the call failed, so every caller must have a non-LLM fallback.
+     */
+    public function complete(string $system, string $user, ?int $maxTokens = null, float $temperature = 0.7): ?string
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+        return $this->call($system, $user, $maxTokens, $temperature);
+    }
+
+    /**
+     * Parse a JSON object out of a model response, tolerating ```json fences and
+     * surrounding prose.
+     */
+    public static function extractJson(string $text): array
+    {
+        $text = trim($text);
+
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)```/', $text, $m)) {
+            $text = trim($m[1]);
+        }
+
+        $data = json_decode($text, true);
+        if (!is_array($data) && preg_match('/\{[\s\S]*\}/', $text, $m)) {
+            $data = json_decode($m[0], true);
+        }
+
+        return is_array($data) ? $data : [];
+    }
+
     private function getSystemPrompt(): string
     {
         return <<<'PROMPT'
@@ -85,7 +118,7 @@ OUTPUT - Return ONLY this JSON, no explanations:
 PROMPT;
     }
 
-    private function call(string $system, string $user): ?string
+    private function call(string $system, string $user, ?int $maxTokens = null, float $temperature = 0.7): ?string
     {
         $payload = [
             'model'    => $this->model,
@@ -93,8 +126,8 @@ PROMPT;
                 ['role' => 'system', 'content' => $system],
                 ['role' => 'user',   'content' => $user],
             ],
-            'max_tokens'  => $this->maxTokens,
-            'temperature' => 0.7,
+            'max_tokens'  => $maxTokens ?? $this->maxTokens,
+            'temperature' => $temperature,
         ];
 
         $ch = curl_init($this->apiUrl);
