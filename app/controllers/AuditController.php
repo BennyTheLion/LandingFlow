@@ -69,10 +69,13 @@ class AuditController extends Controller
             foreach (($cat['checks']??[]) as $c)
                 if (!$c['passed']) $recs[] = ['category'=>$cat['label'],'check'=>$c['label'],'action'=>'יש לתקן: '.$c['label']];
         $rid = 0;
+        // Authorizes the report link in the email, which has to open outside this
+        // session — see database/migrations/2026_08_19_audit_report_share_token.sql
+        $shareToken = bin2hex(random_bytes(32));
         try {
             $db = Database::getInstance()->getConnection();
-            $db->prepare("INSERT INTO audit_reports (url,overall_score,seo_score,security_score,legal_score,accessibility_score,performance_score,spam_score,total_checks,passed_checks,failed_checks,full_report,recommendations,status,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'completed',?,?,NOW())")
-               ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode($results, JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
+            $db->prepare("INSERT INTO audit_reports (url,overall_score,seo_score,security_score,legal_score,accessibility_score,performance_score,spam_score,total_checks,passed_checks,failed_checks,full_report,recommendations,status,share_token,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'completed',?,?,?,NOW())")
+               ->execute([$url, $ovr, $seo['score'], $sec['score'], $leg['score'], $a11y['score'], $perf['score'], $spam['score'], 30, (int)round($ovr/100*30), 30-(int)round($ovr/100*30), json_encode($results, JSON_UNESCAPED_UNICODE), json_encode($recs, JSON_UNESCAPED_UNICODE), $shareToken, $_SERVER['REMOTE_ADDR']??'', $_SERVER['HTTP_USER_AGENT']??'']);
             $rid = $db->lastInsertId();
             $this->rememberReportId((int)$rid);
         } catch (\Throwable $e) {
@@ -101,6 +104,7 @@ class AuditController extends Controller
             'url' => $url,
             'overall_score' => $ovr,
             'created_at' => date('Y-m-d H:i:s'),
+            'share_token' => $shareToken,
         ], $results, $recs, $email);
 
         $parsed = parse_url($url);
@@ -136,6 +140,31 @@ class AuditController extends Controller
     private function ownsReport(int $id): bool
     {
         return $id > 0 && in_array($id, $this->ownedReportIds(), true);
+    }
+
+    /**
+     * May the current request read this report?
+     *
+     * Either the session produced it, or the request carries the row's share_token
+     * — the case that keeps the link in the report email working on another device.
+     * Rows predating the migration have no token and are session-only.
+     */
+    private function canReadReport(array $report): bool
+    {
+        if ($this->ownsReport((int)($report['id'] ?? 0))) {
+            return true;
+        }
+        $token = (string)($report['share_token'] ?? '');
+        $given = (string)($_GET['t'] ?? '');
+        return $token !== '' && $given !== '' && hash_equals($token, $given);
+    }
+
+    /** Report link for emails: carries the token so it opens outside this session */
+    private function reportLink(array $report): string
+    {
+        $link = $this->request->getBaseUrl() . '/audit/pdf/' . (int)($report['id'] ?? 0);
+        $token = (string)($report['share_token'] ?? '');
+        return $token !== '' ? $link . '?t=' . urlencode($token) : $link;
     }
 
     /** Send 6-digit verification code to email */
@@ -236,6 +265,8 @@ class AuditController extends Controller
         $r = $db->prepare("SELECT * FROM audit_reports WHERE id = ?"); $r->execute([$id]);
         $report = $r->fetch(\PDO::FETCH_ASSOC);
         if (!$report) throw new \App\Core\Exceptions\NotFoundException();
+        // Same 404 for "no such report" and "not yours" — do not confirm which ids exist
+        if (!$this->canReadReport($report)) throw new \App\Core\Exceptions\NotFoundException();
         $data = json_decode($report['full_report'] ?? '{}', true);
         header("Content-Type: text/html; charset=utf-8");
         ob_start();
@@ -259,16 +290,13 @@ class AuditController extends Controller
      */
     public function download(string $id): void
     {
-        // 404 rather than 403 — no reason to confirm which ids exist
-        if (!$this->ownsReport((int)$id)) {
-            throw new \App\Core\Exceptions\NotFoundException();
-        }
-
         $db = Database::getInstance()->getConnection();
         $r = $db->prepare("SELECT * FROM audit_reports WHERE id = ?");
         $r->execute([(int)$id]);
         $report = $r->fetch(\PDO::FETCH_ASSOC);
         if (!$report) throw new \App\Core\Exceptions\NotFoundException();
+        // 404 rather than 403 — no reason to confirm which ids exist
+        if (!$this->canReadReport($report)) throw new \App\Core\Exceptions\NotFoundException();
         $data = json_decode($report['full_report'] ?? '{}', true) ?: [];
 
         $tmpDir = STORAGE_PATH . '/tmp';
@@ -280,8 +308,10 @@ class AuditController extends Controller
         } catch (\Throwable $e) {
             Logger::error('audit: download PDF generation failed', ['message' => $e->getMessage()]);
             if (file_exists($pdfPath)) @unlink($pdfPath);
-            // Better the printable view than a dead end
-            $this->redirect('audit/pdf/' . (int)$report['id']);
+            // Better the printable view than a dead end — carry the token through,
+            // or a link-based caller lands on a 404
+            $given = (string)($_GET['t'] ?? '');
+            $this->redirect('audit/pdf/' . (int)$report['id'] . ($given !== '' ? '?t=' . urlencode($given) : ''));
             return;
         }
 
@@ -418,7 +448,7 @@ class AuditController extends Controller
             $lines[] = 'הדוח המלא מצורף להודעה זו כקובץ PDF.';
         }
         if (!empty($report['id'])) {
-            $lines[] = 'לצפייה בדוח בדפדפן: ' . $this->request->getBaseUrl() . '/audit/pdf/' . (int)$report['id'];
+            $lines[] = 'לצפייה בדוח בדפדפן: ' . $this->reportLink($report);
         }
         $lines[] = '';
         $lines[] = 'בברכה,';

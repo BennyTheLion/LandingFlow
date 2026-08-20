@@ -124,12 +124,14 @@ CREATE TABLE `audit_reports` (
     `full_report` JSON NULL COMMENT 'Complete audit results as JSON',
     `recommendations` JSON NULL COMMENT 'Array of recommendations',
     `status` ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+    `share_token` CHAR(64) NULL COMMENT 'Random token authorizing report links; NULL = session-only access',
     `ip_address` VARCHAR(45) NULL,
     `user_agent` VARCHAR(500) NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_audit_url` (`url`(255)),
     INDEX `idx_audit_lead` (`lead_id`),
     INDEX `idx_audit_score` (`overall_score`),
+    UNIQUE INDEX `idx_audit_share_token` (`share_token`),
     FOREIGN KEY (`lead_id`) REFERENCES `leads`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
