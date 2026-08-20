@@ -334,6 +334,18 @@ hot_score =
 
 **סה"כ: פחות מ־$40 בחודש.**
 
+### 12.1 צמצום עלויות נוסף
+
+| פעולה | חוסך | למה |
+|---|---|---|
+| קאשינג תוצאות `Text Search` לפי `{niche}+{city}` ל־30 יום | Google Places | אין טעם לחפש שוב באותו אזור/נישה כל שבוע אם רוב העסקים כבר ב־DB |
+| `Place Details` עם `fields` מצומצם בלבד (name, phone, website, rating, user_ratings_total) | Google Places | שדות מיותרים מייקרים את הבקשה לפי מבנה התמחור של Google |
+| Overpass API (OpenStreetMap, חינמי) לנישות/אזורים מכוסים היטב שם | Google Places | תחליף חינמי חלקי, במיוחד לעסקים מקומיים קטנים |
+| מודל LLM זול/קטן לטיוטות ול־video_brief (המשימה לא דורשת חשיבה מורכבת) | Anthropic/OpenAI API | טיוטה קצרה בפורמט קבוע — מודל יקר הוא בזבוז |
+| Prompt caching אם ה־system prompt/הדוגמאות קבועים בין קריאות | Anthropic/OpenAI API | חוסך טוקנים חוזרים על אותו prompt |
+| וידוא שלא נשלח מייל נפרד לכל אירוע מעקב (open/click) | Resend/Postmark | שומר בטווח החינמי (Resend: 3K/חודש, Postmark: 100/חודש) |
+| **דה־דופליקציה מחמירה (§5)** | Google Places בעיקר | ההשפעה הגדולה ביותר לאורך זמן — מונע "תשלום חוזר" על אותם עסקים בכל הרצה שבועית |
+
 ### משתני סביבה
 ```
 GOOGLE_PLACES_API_KEY=
