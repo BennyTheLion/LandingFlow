@@ -67,6 +67,7 @@ class AuditEngine
         $result->httpStatus = $page['status'];
         $result->responseTimeMs = $page['time_ms'];
         $html = $page['body'];
+        $firstAttempt = $page;
 
         if (!$result->fetchOk) {
             // Retry once over http:// when https:// failed — plenty of small
@@ -91,13 +92,20 @@ class AuditEngine
                 // WAFs/CDNs commonly use to reject automated clients. A site behind
                 // Cloudflare/Hostinger-style protection is not a bad lead — we just
                 // couldn't see it, and that is a human-review case, not a close.
-                $result->looksBlocked = $page['blocked']
+                //
+                // Check both attempts, not just the last one: when https:// shows a
+                // block signal (e.g. 403) and the http:// fallback then fails outright
+                // (status 0 — connection refused, nothing listening on 80), $page holds
+                // the fallback's result and would otherwise mask the real signal.
+                $blockedByRobots = $firstAttempt['blocked'] || $page['blocked'];
+                $result->looksBlocked = $blockedByRobots
+                    || in_array($firstAttempt['status'], [401, 403, 429, 503], true)
                     || in_array($page['status'], [401, 403, 429, 503], true);
-                $result->issues[] = $page['blocked']
+                $result->issues[] = $blockedByRobots
                     ? 'robots.txt חוסם סריקה של דף הבית'
                     : ($result->looksBlocked
-                        ? 'האתר חסם את הסריקה (HTTP ' . $page['status'] . ') — כנראה הגנת בוטים'
-                        : 'לא ניתן לטעון את דף הבית (HTTP ' . $page['status'] . ')');
+                        ? 'האתר חסם את הסריקה (HTTP ' . $result->httpStatus . ') — כנראה הגנת בוטים'
+                        : 'לא ניתן לטעון את דף הבית (HTTP ' . $result->httpStatus . ')');
                 $result->hotScore = 0;
                 $result->primaryIssue = 'none';
                 return $result;

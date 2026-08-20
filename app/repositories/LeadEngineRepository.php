@@ -31,7 +31,7 @@ class LeadEngineRepository
     public function finishRun(int $runId, array $counters, array $log): void
     {
         $fields = [
-            'sourced', 'skipped_duplicate', 'skipped_dnc', 'audited',
+            'sourced', 'skipped_duplicate', 'skipped_dnc', 'audited', 'reaudited',
             'below_threshold', 'enriched', 'drafted', 'errors',
         ];
         $set = ['finished_at = NOW()'];

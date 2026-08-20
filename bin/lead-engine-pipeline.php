@@ -75,13 +75,14 @@ try {
         . "  skipped duplicate: %d\n"
         . "  skipped DNC:       %d\n"
         . "  audited:           %d\n"
+        . "  reaudited:         %d\n"
         . "  below threshold:   %d\n"
         . "  enriched:          %d\n"
         . "  drafted:           %d\n"
         . "  errors:            %d\n",
         $result['run_id'],
         $c['sourced'] ?? 0, $c['skipped_duplicate'] ?? 0, $c['skipped_dnc'] ?? 0,
-        $c['audited'] ?? 0, $c['below_threshold'] ?? 0, $c['enriched'] ?? 0,
+        $c['audited'] ?? 0, $c['reaudited'] ?? 0, $c['below_threshold'] ?? 0, $c['enriched'] ?? 0,
         $c['drafted'] ?? 0, $c['errors'] ?? 0
     );
 

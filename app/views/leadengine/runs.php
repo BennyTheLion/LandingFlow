@@ -87,6 +87,7 @@ summary{cursor:pointer;font-size:.79rem;color:var(--primary);font-weight:600}
       <span class="counter">כפולים <b><?= (int) $run['skipped_duplicate'] ?></b></span>
       <span class="counter">חסומים <b><?= (int) $run['skipped_dnc'] ?></b></span>
       <span class="counter">נבדקו <b><?= (int) $run['audited'] ?></b></span>
+      <span class="counter">נבדקו מחדש <b><?= (int) ($run['reaudited'] ?? 0) ?></b></span>
       <span class="counter">מתחת לסף <b><?= (int) $run['below_threshold'] ?></b></span>
       <span class="counter">הועשרו <b><?= (int) $run['enriched'] ?></b></span>
       <span class="counter ok">טיוטות <b><?= (int) $run['drafted'] ?></b></span>

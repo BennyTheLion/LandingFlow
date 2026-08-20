@@ -37,7 +37,7 @@ class LeadEnginePipeline
 
     private const ZERO_COUNTERS = [
         'sourced' => 0, 'skipped_duplicate' => 0, 'skipped_dnc' => 0, 'audited' => 0,
-        'below_threshold' => 0, 'enriched' => 0, 'drafted' => 0, 'errors' => 0,
+        'reaudited' => 0, 'below_threshold' => 0, 'enriched' => 0, 'drafted' => 0, 'errors' => 0,
     ];
 
     /**
@@ -252,18 +252,28 @@ class LeadEnginePipeline
      */
     public function stageReaudit(int $limit = 25): int
     {
-        $due = $this->prospects->dueForReaudit(['blocked'], LeadEngineConfig::int('reaudit_blocked_days'), $limit);
-        $remaining = $limit - count($due);
-        if ($remaining > 0) {
+        // Split the budget instead of letting 'blocked' consume it first — a large
+        // blocked backlog (e.g. a wave of sites behind the same WAF) would otherwise
+        // starve the 'closed'/'sent' side out indefinitely.
+        $blockedShare = (int) ceil($limit / 2);
+        $due = $this->prospects->dueForReaudit(['blocked'], LeadEngineConfig::int('reaudit_blocked_days'), $blockedShare);
+        $closedShare = $limit - count($due);
+        if ($closedShare > 0) {
             $due = array_merge($due, $this->prospects->dueForReaudit(
-                ['closed', 'sent'], LeadEngineConfig::int('reaudit_closed_days'), $remaining
+                ['closed', 'sent'], LeadEngineConfig::int('reaudit_closed_days'), $closedShare
             ));
         }
 
         $done = 0;
         foreach ($due as $prospect) {
+            $domain = (string) ($prospect['domain'] ?? '');
+            if ($this->dnc->isBlocked($domain, $prospect['email'] ?? null, $prospect['phone'] ?? null)) {
+                $this->log[] = ['stage' => 'reaudit', 'prospect_id' => (int) $prospect['id'], 'skipped' => 'do_not_contact'];
+                continue;
+            }
             try {
                 $this->auditProspect($prospect);
+                $this->counters['reaudited']++;
                 $done++;
             } catch (\Throwable $e) {
                 $this->counters['errors']++;
@@ -287,6 +297,14 @@ class LeadEnginePipeline
     public function auditProspect(array $prospect): array
     {
         $prospectId = (int) $prospect['id'];
+        // A reaudit of an already-'sent' prospect must not demote it back to
+        // 'audited'/'closed'/'blocked' — that erases the fact that outreach already
+        // happened, silently breaks OutreachRepository::followupsDue() (which requires
+        // status='sent'), and undercounts the dashboard's sent total. The audit row
+        // still gets saved (and hot_score/primary_issue still denormalize onto the
+        // prospect) so a score drop is visible for a manual follow-up decision (§10);
+        // only the status transition is skipped.
+        $preserveStatus = ($prospect['status'] ?? '') === 'sent';
         $audit = $this->auditEngine->runAudit(
             (string) $prospect['url'],
             (bool) ($prospect['spends_on_ads'] ?? false),
@@ -304,27 +322,34 @@ class LeadEnginePipeline
             // route it to 'blocked' for manual review instead of closing it like a
             // real dead-end. Only a genuine connection failure closes outright.
             $status = $audit->looksBlocked ? 'blocked' : 'closed';
-            $this->prospects->setStatus($prospectId, $status);
+            if (!$preserveStatus) {
+                $this->prospects->setStatus($prospectId, $status);
+            }
             $this->log[] = [
                 'stage' => 'audit', 'prospect_id' => $prospectId, 'domain' => $prospect['domain'],
-                'outcome' => $status,
+                'outcome' => $preserveStatus ? 'sent (status kept)' : $status,
                 'reason' => $audit->looksBlocked ? 'bot protection likely' : 'homepage unreachable',
                 'http_status' => $audit->httpStatus,
             ];
-            return ['audit_id' => $auditId, 'hot_score' => 0, 'passed' => false, 'status' => $status];
+            return ['audit_id' => $auditId, 'hot_score' => 0, 'passed' => false, 'status' => $preserveStatus ? 'sent' : $status];
         }
 
         if ($audit->hotScore < $threshold) {
-            $this->prospects->setStatus($prospectId, 'closed');
+            if (!$preserveStatus) {
+                $this->prospects->setStatus($prospectId, 'closed');
+            }
             $this->counters['below_threshold']++;
             $this->log[] = [
                 'stage' => 'audit', 'prospect_id' => $prospectId, 'domain' => $prospect['domain'],
-                'closed' => 'below_threshold', 'hot_score' => $audit->hotScore, 'threshold' => $threshold,
+                'closed' => $preserveStatus ? 'below_threshold (status kept: sent)' : 'below_threshold',
+                'hot_score' => $audit->hotScore, 'threshold' => $threshold,
             ];
             return ['audit_id' => $auditId, 'hot_score' => $audit->hotScore, 'passed' => false];
         }
 
-        $this->prospects->setStatus($prospectId, 'audited');
+        if (!$preserveStatus) {
+            $this->prospects->setStatus($prospectId, 'audited');
+        }
         return ['audit_id' => $auditId, 'hot_score' => $audit->hotScore, 'passed' => true];
     }
 
