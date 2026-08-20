@@ -47,12 +47,14 @@ class AuditController extends Controller
         
         $url = rtrim($url, '/');
         $ctx = stream_context_create(['http' => ['timeout' => 8, 'user_agent' => 'Mozilla/5.0']]);
+        // Time the page fetch itself — $start used to be set after it, so every site
+        // measured 0ms and passed the response-time check for free
+        $start = microtime(true);
         $html = @file_get_contents($url, false, $ctx);
+        $rt = round((microtime(true) - $start) * 1000);
         if ($html === false) $html = '';
         $headers = @get_headers($url, 1);
         if (!is_array($headers)) $headers = [];
-        $start = microtime(true);
-        $rt = round((microtime(true) - $start) * 1000);
         $seo = $this->seoC($url, $html);
         $sec = $this->secC($url, $headers, $html);
         $leg = $this->legC($url, $html);
