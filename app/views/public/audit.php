@@ -50,7 +50,7 @@
       <div id="domainInfo" style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem"></div>
       <div id="sc" style="width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--success) 0deg,var(--border) 0deg);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><div style="width:110px;height:110px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center"><span id="sn" style="font-family:var(--font-mono);font-size:2.5rem;font-weight:800">0</span><span style="font-size:.75rem;color:var(--ink-faint)">/100</span></div></div>
       <div id="de"></div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px"><a id="dl" href="#" class="btn btn-secondary">⬇️ הורד דוח PDF</a><button type="button" id="pl" class="btn btn-primary">📧 שלח דוח למייל</button><a id="wl" href="#" class="btn btn-ghost" target="_blank">💬 שלח בוואטסאפ</a></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px"><a id="dl" href="#" class="btn btn-secondary">⬇️ הורד דוח PDF</a><button type="button" id="pl" class="btn btn-primary">📧 שלח דוח למייל</button><button type="button" id="wl" class="btn btn-ghost">💬 שלח בוואטסאפ</button></div>
       <div id="mailBox" style="display:none;max-width:430px;margin:14px auto 0;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px">
         <label for="mailTo" style="display:block;font-size:.82rem;font-weight:600;margin-bottom:6px">לאיזו כתובת לשלוח את הדוח?</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -59,6 +59,15 @@
           <button type="button" id="mailCancel" class="btn btn-ghost">ביטול</button>
         </div>
         <p style="font-size:.74rem;color:var(--ink-faint);margin-top:7px">ניתן לשנות לכתובת אחרת — למשל לשלוח את הדוח לעצמכם או לאיש מקצוע.</p>
+      </div>
+      <div id="waBox" style="display:none;max-width:430px;margin:14px auto 0;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <label for="waPhone" style="display:block;font-size:.82rem;font-weight:600;margin-bottom:6px">לאיזה מספר וואטסאפ לשלוח?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="tel" id="waPhone" placeholder="05X-XXXXXXX" style="direction:ltr;text-align:left;flex:1;min-width:170px">
+          <button type="button" id="waSend" class="btn btn-primary">שלח</button>
+          <button type="button" id="waCancel" class="btn btn-ghost">ביטול</button>
+        </div>
+        <p style="font-size:.74rem;color:var(--ink-faint);margin-top:7px">ייפתח וואטסאפ עם ההודעה מוכנה, למספר שהזנתם — למשל שלכם או של איש מקצוע.</p>
       </div>
       <p id="mailNote" style="text-align:center;font-size:.78rem;color:var(--success);margin-top:10px"></p>
     </div>
@@ -119,7 +128,7 @@ document.getElementById("sendCodeBtn").addEventListener("click",async function()
 // Scan submission
 document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";startLoadProgress();try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});if(isRateLimited(r)){stopLoadProgress();alert(RATE_LIMIT_MSG);document.getElementById("load").style.display="none";return}var d=await r.json();if(!d.success){stopLoadProgress();alert("Error: "+d.error);document.getElementById("load").style.display="none";return}stopLoadProgress();document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
     var ui=d.urlInfo||{};document.getElementById("domainInfo").innerHTML="<div><strong>כתובת:</strong> "+ui.url+"</div><div><strong>פרוטוקול:</strong> "+(ui.protocol||"-")+"</div><div><strong>דומיין:</strong> "+ui.domain+"</div><div><strong>סיומת:</strong> ."+ui.tld+"</div><div><strong>WWW:</strong> "+(ui.has_www?"כן":"לא")+"</div><div><strong>נתיב:</strong> "+(ui.path||"/")+"</div>";
-    var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){var tipHtml=ck.tip?"<span class=chk-tip tabindex=0 role=button aria-label=\"הסבר: "+ck.tip.replace(/\"/g,"&quot;")+"\" data-tip=\""+ck.tip.replace(/\"/g,"&quot;")+"\">?</span>":"";h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+tipHtml+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").href="https://wa.me/972528529448?text="+msg;var plBtn=document.getElementById("pl");plBtn.dataset.reportId=d.reportId;plBtn.dataset.email=em;plBtn.disabled=false;plBtn.textContent=d.emailed?"📧 שלח שוב למייל":"📧 שלח דוח למייל";document.getElementById("mailNote").textContent=d.emailed?"✅ הדוח נשלח לאימייל "+em+" (כולל קובץ PDF מצורף)":"";
+    var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){var tipHtml=ck.tip?"<span class=chk-tip tabindex=0 role=button aria-label=\"הסבר: "+ck.tip.replace(/\"/g,"&quot;")+"\" data-tip=\""+ck.tip.replace(/\"/g,"&quot;")+"\">?</span>":"";h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+tipHtml+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").dataset.msg=msg;var plBtn=document.getElementById("pl");plBtn.dataset.reportId=d.reportId;plBtn.dataset.email=em;plBtn.disabled=false;plBtn.textContent=d.emailed?"📧 שלח שוב למייל":"📧 שלח דוח למייל";document.getElementById("mailNote").textContent=d.emailed?"✅ הדוח נשלח לאימייל "+em+" (כולל קובץ PDF מצורף)":"";
     // Both the download and the re-send need a saved report to point at
     var dlBtn=document.getElementById("dl");
     if(d.reportId){dlBtn.style.display="";dlBtn.href="<?= $url('audit/download') ?>/"+d.reportId}
@@ -157,6 +166,31 @@ document.getElementById("mailSend").addEventListener("click",async function(){
     else{alert(d.error||"שליחת הדוח נכשלה")}
   }catch(err){alert("שגיאה בשליחת הדוח")}
   finally{btn.textContent=orig;btn.disabled=false}
+});
+// WhatsApp: ask which number first, same pattern as the email box — the
+// message is prepared once per scan and stashed on #wl's dataset, then
+// reused however many times the box gets opened for a different number.
+var waBox=document.getElementById("waBox"),waPhone=document.getElementById("waPhone");
+document.getElementById("wl").addEventListener("click",function(){
+  if(!this.dataset.msg){alert("יש להריץ בדיקה קודם");return}
+  var open=waBox.style.display!=="none";
+  waBox.style.display=open?"none":"block";
+  if(!open){
+    waBox.scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(function(){waPhone.focus()},300);
+  }
+});
+document.getElementById("waCancel").addEventListener("click",function(){waBox.style.display="none"});
+waPhone.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();document.getElementById("waSend").click()}});
+document.getElementById("waSend").addEventListener("click",function(){
+  var msg=document.getElementById("wl").dataset.msg||"";
+  var digits=(waPhone.value||"").replace(/\D/g,"");
+  // Israeli local format (0XX-XXXXXXX) -> international (972XXXXXXXXX);
+  // already-international numbers pass through unchanged.
+  var intl=digits.startsWith("972")?digits:digits.replace(/^0/,"972");
+  if(intl.length<11){alert("נא להזין מספר טלפון תקין");waPhone.focus();return}
+  window.open("https://wa.me/"+intl+"?text="+msg,"_blank");
+  waBox.style.display="none";
 });
 </script>
 <?php $content = ob_get_clean(); include __DIR__ . '/../partials/layout.php'; ?>
