@@ -31,8 +31,16 @@
     <div id="codeRow" class="form-group" style="display:none"><label>קוד אימות</label><input type="text" name="code" id="ac" placeholder="הזן קוד בן 6 ספרות" maxlength="6" style="direction:ltr;text-align:center;font-family:var(--font-mono);font-size:1.2rem;letter-spacing:4px"><p style="font-size:.78rem;color:var(--success);margin-top:4px" id="codeMsg"></p></div>
     <div class="check-row" style="margin-bottom:16px"><input type="checkbox" id="auditConsent" required><label for="auditConsent">אני מאשר/ת את <a href="<?= $url('terms-of-service') ?>" target="_blank">תנאי השימוש</a></label></div>
     <button type="submit" class="btn btn-primary btn-lg btn-block" id="scanBtn">התחל בדיקה מקיפה</button></form>
-    <div id="load" style="display:none;text-align:center;padding:30px"><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px"></div><p style="color:var(--ink-soft)">בודק את האתר...</p></div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}
+    <div id="load" style="display:none;padding:30px 10px 10px;max-width:320px;margin:0 auto">
+      <div id="loadSteps" style="display:flex;flex-direction:column;gap:9px;font-size:.85rem"></div>
+    </div>
+    <style>
+    .load-step{display:flex;align-items:center;gap:9px;color:var(--ink-faint);transition:color .2s}
+    .load-step.active{color:var(--primary);font-weight:700}
+    .load-step.done{color:var(--success)}
+    .load-step .dot{width:16px;text-align:center;flex-shrink:0}
+    .load-step.active .dot{animation:pulse 1s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
     .chk-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin:0 6px;border-radius:50%;background:var(--surface-2);color:var(--ink-faint);cursor:pointer;font-size:.68rem;font-weight:700;line-height:1;vertical-align:middle;font-style:normal}
     .chk-tip:hover,.chk-tip.active{background:var(--primary);color:#fff}
     .chk-tip::after{content:attr(data-tip);position:absolute;bottom:135%;right:50%;transform:translateX(50%);width:220px;max-width:65vw;background:#1e1e2e;color:#fff;padding:9px 11px;border-radius:8px;font-size:.72rem;font-weight:400;line-height:1.5;white-space:normal;text-align:right;box-shadow:0 6px 20px rgba(0,0,0,.28);opacity:0;visibility:hidden;transition:opacity .15s;pointer-events:none;z-index:30}
@@ -60,6 +68,29 @@
 </div></section>
 <script>
 var csrfToken=document.querySelector('input[name="<?= CSRF_TOKEN_NAME ?>"]').value;
+// Fake but honest step-by-step progress: the scan is one synchronous request
+// (no server-sent progress), so this cycles through the six real category
+// names — matching SiteAuditReport::run()'s order — while the fetch is in
+// flight. Parks on the last step instead of finishing early if the request
+// runs long, so it never claims to be done before the response arrives.
+var LOAD_STEPS=["טוען את הדף...","בודק SEO...","בודק אבטחה...","בודק תאימות משפטית...","בודק נגישות...","בודק ביצועים...","בודק סימני ספאם ואמון..."];
+var loadTimer=null,loadIdx=0;
+function renderLoadSteps(){
+  var html="";
+  for(var i=0;i<LOAD_STEPS.length;i++){
+    var state=i<loadIdx?"done":(i===loadIdx?"active":"");
+    var icon=i<loadIdx?"✔":(i===loadIdx?"◐":"○");
+    html+='<div class="load-step '+state+'"><span class="dot">'+icon+'</span><span>'+LOAD_STEPS[i]+'</span></div>';
+  }
+  document.getElementById("loadSteps").innerHTML=html;
+}
+function startLoadProgress(){
+  loadIdx=0;renderLoadSteps();
+  loadTimer=setInterval(function(){
+    if(loadIdx<LOAD_STEPS.length-1){loadIdx++;renderLoadSteps()}
+  },1400);
+}
+function stopLoadProgress(){if(loadTimer){clearInterval(loadTimer);loadTimer=null}}
 // The audit endpoints are rate limited and answer 429 with an HTML error page, not
 // JSON — parse that as JSON and the user sees a SyntaxError instead of the reason.
 var RATE_LIMIT_MSG="שלחתם יותר מדי בקשות. נסו שוב בעוד מספר דקות.";
@@ -86,14 +117,14 @@ document.getElementById("sendCodeBtn").addEventListener("click",async function()
   }catch(err){alert("שגיאה בשליחת הקוד");btn.disabled=false;btn.textContent="שלח קוד אימות"}
 });
 // Scan submission
-document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});if(isRateLimited(r)){alert(RATE_LIMIT_MSG);document.getElementById("load").style.display="none";return}var d=await r.json();if(!d.success){alert("Error: "+d.error);document.getElementById("load").style.display="none";return}document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
+document.getElementById("af").addEventListener("submit",async function(e){e.preventDefault();var u=document.getElementById("au").value;var em=document.getElementById("ae").value;var code=document.getElementById("ac").value;if(!em){alert("נא להזין אימייל");return}if(!code){alert("יש להזין קוד אימות. לחץ על שלח קוד");return}document.getElementById("load").style.display="block";document.getElementById("res").style.display="none";startLoadProgress();try{var r=await fetch("<?= $url('audit/check') ?>",{method:"POST",body:new URLSearchParams({url:u,email:em,code:code,'<?= CSRF_TOKEN_NAME ?>':csrfToken})});if(isRateLimited(r)){stopLoadProgress();alert(RATE_LIMIT_MSG);document.getElementById("load").style.display="none";return}var d=await r.json();if(!d.success){stopLoadProgress();alert("Error: "+d.error);document.getElementById("load").style.display="none";return}stopLoadProgress();document.getElementById("load").style.display="none";document.getElementById("res").style.display="block";
     var ui=d.urlInfo||{};document.getElementById("domainInfo").innerHTML="<div><strong>כתובת:</strong> "+ui.url+"</div><div><strong>פרוטוקול:</strong> "+(ui.protocol||"-")+"</div><div><strong>דומיין:</strong> "+ui.domain+"</div><div><strong>סיומת:</strong> ."+ui.tld+"</div><div><strong>WWW:</strong> "+(ui.has_www?"כן":"לא")+"</div><div><strong>נתיב:</strong> "+(ui.path||"/")+"</div>";
     var sn=document.getElementById("sn"),sc=document.getElementById("sc"),t=d.overall,c=0;var iv=setInterval(function(){c=Math.min(t,c+2);sn.textContent=c;sc.style.background="conic-gradient(var(--success) "+(c*3.6)+"deg,var(--border) 0deg)";if(c>=t)clearInterval(iv)},20);var h="";for(var[cat,data]of Object.entries(d.results)){h+="<h3 style=margin:20px 0 10px;font-size:.95rem;font-weight:700;color:var(--primary-dark)>"+data.label+" ("+data.score+"/100)</h3>";for(var ck of Object.values(data.checks)){var tipHtml=ck.tip?"<span class=chk-tip tabindex=0 role=button aria-label=\"הסבר: "+ck.tip.replace(/\"/g,"&quot;")+"\" data-tip=\""+ck.tip.replace(/\"/g,"&quot;")+"\">?</span>":"";h+="<div style=display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem><span>"+ck.label+tipHtml+"</span><span style=font-size:.78rem;color:var(--ink-faint);margin:0 8px>"+(ck.value||"")+"</span><span style=font-weight:700;color:"+(ck.passed?"var(--success)":"var(--danger)")+">"+(ck.passed?"✔":"✘")+"</span></div>";if(ck.detail&&ck.detail!==ck.value)h+="<div style=font-size:.75rem;color:var(--ink-faint);padding:2px 0 8px 16px;border-bottom:1px solid var(--border)>📋 "+ck.detail+"</div>";if(!ck.passed&&ck.impact)h+="<div style=font-size:.75rem;color:var(--danger);padding:4px 0 8px 16px;border-bottom:1px solid var(--border)>⚠️ "+ck.impact+"</div>"}}h+="<div style=margin-top:20px;padding:16px;background:var(--surface-2);border-radius:12px><h4 style=font-size:.9rem;font-weight:700;margin-bottom:8px>המלצות לשיפור</h4>";for(var rec of(d.recommendations||[]))h+="<div style=font-size:.82rem;color:var(--ink-soft);padding:4px 0>• "+rec.action+"</div>";h+="</div>";document.getElementById("de").innerHTML=h;var msg="דוח ביקורת "+u+"%0A%0Aציון: "+d.overall+"/100%0A";document.getElementById("wl").href="https://wa.me/972528529448?text="+msg;var plBtn=document.getElementById("pl");plBtn.dataset.reportId=d.reportId;plBtn.dataset.email=em;plBtn.disabled=false;plBtn.textContent=d.emailed?"📧 שלח שוב למייל":"📧 שלח דוח למייל";document.getElementById("mailNote").textContent=d.emailed?"✅ הדוח נשלח לאימייל "+em+" (כולל קובץ PDF מצורף)":"";
     // Both the download and the re-send need a saved report to point at
     var dlBtn=document.getElementById("dl");
     if(d.reportId){dlBtn.style.display="";dlBtn.href="<?= $url('audit/download') ?>/"+d.reportId}
     else{dlBtn.style.display="none";plBtn.disabled=true;plBtn.title="הדוח לא נשמר — לא ניתן לשלוח או להוריד"}
-    document.getElementById("mailBox").style.display="none"}catch(err){alert("שגיאה: "+(err.message||"ודאו שהURL תקין"));document.getElementById("load").style.display="none";console.error(err)}});
+    document.getElementById("mailBox").style.display="none"}catch(err){stopLoadProgress();alert("שגיאה: "+(err.message||"ודאו שהURL תקין"));document.getElementById("load").style.display="none";console.error(err)}});
 // Sending asks which address first — the scan address is only the default
 var mailBox=document.getElementById("mailBox"),mailTo=document.getElementById("mailTo");
 document.getElementById("pl").addEventListener("click",function(){
