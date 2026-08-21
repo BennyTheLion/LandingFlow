@@ -101,7 +101,14 @@ document.getElementById("pl").addEventListener("click",function(){
   if(!rid){alert("יש להריץ בדיקה קודם");return}
   var open=mailBox.style.display!=="none";
   mailBox.style.display=open?"none":"block";
-  if(!open){if(!mailTo.value)mailTo.value=this.dataset.email||"";mailTo.focus();mailTo.select()}
+  if(!open){
+    if(!mailTo.value)mailTo.value=this.dataset.email||"";
+    // The box sits after the full check list (30+ rows) — on a long report it
+    // can open well below the fold, and focus() alone doesn't reliably scroll
+    // every browser to it. Make it impossible to miss.
+    mailBox.scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(function(){mailTo.focus();mailTo.select()},300);
+  }
 });
 document.getElementById("mailCancel").addEventListener("click",function(){mailBox.style.display="none"});
 mailTo.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();document.getElementById("mailSend").click()}});
